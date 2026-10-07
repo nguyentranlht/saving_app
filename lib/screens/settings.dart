@@ -79,9 +79,11 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              _row(c, Icons.download_outlined, c.muted, s.exportCsv,
-                  onTap: () => _export(context, store),
-                  trailing: Icon(Icons.chevron_right, color: c.muted)),
+              // Builder để lấy vị trí của chính dòng này làm điểm neo bảng chia sẻ.
+              Builder(
+                builder: (rowCtx) => _row(c, Icons.download_outlined, c.muted, s.exportCsv,
+                    onTap: () => _export(rowCtx, store), trailing: Icon(Icons.chevron_right, color: c.muted)),
+              ),
               Divider(height: 1, color: c.divider),
               _row(c, Icons.delete_outline, c.expense, s.clearAll,
                   sub: s.cannotUndoShort,
@@ -198,9 +200,13 @@ class SettingsScreen extends StatelessWidget {
       );
       return;
     }
+    // iOS 26 và iPad bắt buộc có vị trí neo cho bảng chia sẻ, thiếu sẽ báo lỗi.
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
     try {
-      await shareCsv(store);
-    } catch (_) {
+      await shareCsv(store, origin: origin);
+    } catch (e) {
+      debugPrint('Xuất CSV lỗi: $e');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(S.current.exportFailed)),
