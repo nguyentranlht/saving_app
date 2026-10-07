@@ -52,7 +52,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
               onTap: () => store.setTheme(c.isDark ? ThemeMode.light : ThemeMode.dark),
             ),
             const SizedBox(width: 10),
-            CircleBtn(icon: Icons.tune, onTap: () => widget.onGoTab(3)),
+            CircleBtn(icon: Icons.settings, onTap: () => widget.onGoTab(3)),
           ],
         ),
         const SizedBox(height: 16),

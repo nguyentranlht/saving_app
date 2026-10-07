@@ -94,6 +94,16 @@ class S {
   String get all => _('Tất cả', 'All');
   String get noTx => _('Không có giao dịch nào', 'No transactions');
   String get net => _('Ròng', 'Net');
+  String get allTime => _('Mọi thời gian', 'All time');
+  String get thisWeek => _('Tuần này', 'This week');
+  String get thisMonth => _('Tháng này', 'This month');
+  String get lastMonth => _('Tháng trước', 'Last month');
+  String get customRange => _('Tự chọn ngày…', 'Custom dates…');
+  String get allCategories => _('Tất cả danh mục', 'All categories');
+  String categoriesSelected(int n) => en ? '$n categories' : '$n danh mục';
+  String matching(int n) => en ? '$n matching transaction${n == 1 ? '' : 's'}' : '$n giao dịch phù hợp';
+  String get clearFilters => _('Xóa bộ lọc', 'Clear filters');
+  String get done => _('Xong', 'Done');
 
   // ---- Chi tiết ----
   String get txDetail => _('Chi tiết giao dịch', 'Transaction details');

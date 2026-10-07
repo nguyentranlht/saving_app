@@ -59,7 +59,7 @@ class _ShellState extends State<Shell> {
                     _item(1, Icons.schedule, Icons.schedule, s.tabHistory),
                     const Expanded(child: SizedBox()),
                     _item(2, Icons.bar_chart_rounded, Icons.bar_chart_rounded, s.tabStats),
-                    _item(3, Icons.tune, Icons.tune, s.tabSettings),
+                    _item(3, Icons.settings, Icons.settings, s.tabSettings),
                   ],
                 ),
                 Positioned(
