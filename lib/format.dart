@@ -86,3 +86,53 @@ String searchKey(String s) {
   }
   return b.toString();
 }
+
+/// Các phép tính của máy tính số tiền (ký hiệu hiển thị).
+const calcOps = ['+', '−', '×', '÷'];
+
+/// Tính biểu thức số tiền, ví dụ "45000+30000×2" -> 105000 (× ÷ trước, + − sau),
+/// làm tròn tới đồng. Bỏ qua phép tính thừa ở cuối ("45000+" -> 45000).
+/// Trả về null nếu rỗng hoặc chia cho 0.
+int? evalAmount(String expr) {
+  final nums = <double>[];
+  final ops = <String>[];
+  var cur = '';
+  for (final ch in expr.split('')) {
+    if (calcOps.contains(ch)) {
+      if (cur.isEmpty) continue; // phép tính đứng đầu / liền nhau: bỏ qua
+      nums.add(double.parse(cur));
+      ops.add(ch);
+      cur = '';
+    } else if (RegExp(r'\d').hasMatch(ch)) {
+      cur += ch;
+    }
+  }
+  if (cur.isNotEmpty) {
+    nums.add(double.parse(cur));
+  } else if (ops.isNotEmpty) {
+    ops.removeLast();
+  }
+  if (nums.isEmpty) return null;
+
+  // Lượt 1: × ÷
+  final n2 = <double>[nums.first];
+  final o2 = <String>[];
+  for (var i = 0; i < ops.length; i++) {
+    final b = nums[i + 1];
+    if (ops[i] == '×') {
+      n2.last *= b;
+    } else if (ops[i] == '÷') {
+      if (b == 0) return null;
+      n2.last /= b;
+    } else {
+      n2.add(b);
+      o2.add(ops[i]);
+    }
+  }
+  // Lượt 2: + −
+  var r = n2.first;
+  for (var i = 0; i < o2.length; i++) {
+    r = o2[i] == '+' ? r + n2[i + 1] : r - n2[i + 1];
+  }
+  return r.round();
+}

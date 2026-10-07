@@ -5,6 +5,7 @@ import '../l10n.dart';
 import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
+import '../widgets/calculator.dart';
 import '../widgets/common.dart';
 import 'budget.dart';
 
@@ -54,6 +55,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     _amountCtl.dispose();
     _noteCtl.dispose();
     super.dispose();
+  }
+
+  Future<void> _openCalculator(Color accent) async {
+    FocusScope.of(context).unfocus(); // ẩn bàn phím số
+    final v = await showAmountCalculator(context, initial: _amount, accent: accent);
+    if (v != null && mounted) setState(() => _amountCtl.text = groupDigits(v));
   }
 
   void _addQuick(int v) {
@@ -251,6 +258,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               ),
                             ),
                             Text('đ', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: c.muted)),
+                            const SizedBox(width: 6),
+                            // Máy tính: 45.000 + 30.000, 600.000 ÷ 4…
+                            IconButton.filledTonal(
+                              tooltip: s.calculator,
+                              onPressed: () => _openCalculator(accent),
+                              icon: const Icon(Icons.calculate_outlined),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 6),

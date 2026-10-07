@@ -91,6 +91,10 @@ class S {
   String get newTx => _('Ghi giao dịch', 'New transaction');
   String get editTx => _('Sửa giao dịch', 'Edit transaction');
   String get amount => _('Số tiền', 'Amount');
+  String get calculator => _('Máy tính', 'Calculator');
+  String get useResult => _('Dùng', 'Use');
+  String get resultMustBePositive => _('Kết quả phải lớn hơn 0', 'Result must be greater than 0');
+  String get cannotCalc => _('Không tính được', 'Can\'t calculate');
   String get noteHint => _('Thêm ghi chú (không bắt buộc)', 'Add a note (optional)');
   String get change => _('Đổi', 'Change');
   String get saveExpense => _('Lưu khoản chi', 'Save expense');
