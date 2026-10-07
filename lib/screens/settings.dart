@@ -21,8 +21,6 @@ class SettingsScreen extends StatelessWidget {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
     final s = S.of(context);
-    final isDark = store.themeMode == ThemeMode.dark;
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
@@ -35,9 +33,14 @@ class SettingsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Expanded(child: _themeOption(context, c, s.light, false, !isDark, store)),
-              const SizedBox(width: 12),
-              Expanded(child: _themeOption(context, c, s.dark, true, isDark, store)),
+              for (final (i, (mode, label)) in [
+                (ThemeMode.light, s.light),
+                (ThemeMode.dark, s.dark),
+                (ThemeMode.system, s.system),
+              ].indexed) ...[
+                if (i > 0) const SizedBox(width: 10),
+                Expanded(child: _themeOption(c, label, mode, store)),
+              ],
             ],
           ),
         ),
@@ -148,42 +151,58 @@ class SettingsScreen extends StatelessWidget {
         child: Text(t, style: TextStyle(color: c.muted, fontWeight: FontWeight.w800, letterSpacing: .5)),
       );
 
-  Widget _themeOption(BuildContext context, AppColors c, String label, bool dark, bool selected, AppStore store) {
-    final prevBg = dark ? const Color(0xFF0D1412) : Colors.white;
-    final bar1 = dark ? const Color(0xFF5FD8AE) : const Color(0xFF0B5D4B);
-    final bar2 = dark ? const Color(0xFF243029) : const Color(0xFFE9EDEB);
+  /// Ô chọn giao diện có hình xem trước; "Hệ thống" chia đôi nửa sáng / nửa tối.
+  Widget _themeOption(AppColors c, String label, ThemeMode mode, AppStore store) {
+    Widget preview(bool dark) => Container(
+          padding: const EdgeInsets.all(10),
+          color: dark ? const Color(0xFF0D1412) : Colors.white,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FractionallySizedBox(
+                widthFactor: 0.7,
+                child: Container(
+                    height: 9,
+                    decoration: BoxDecoration(
+                        color: dark ? const Color(0xFF5FD8AE) : const Color(0xFF0B5D4B),
+                        borderRadius: BorderRadius.circular(6))),
+              ),
+              const SizedBox(height: 7),
+              Container(
+                  height: 9,
+                  decoration: BoxDecoration(
+                      color: dark ? const Color(0xFF243029) : const Color(0xFFE9EDEB),
+                      borderRadius: BorderRadius.circular(6))),
+            ],
+          ),
+        );
+    final selected = store.themeMode == mode;
     return GestureDetector(
-      onTap: () => store.setTheme(dark ? ThemeMode.dark : ThemeMode.light),
+      onTap: () => store.setTheme(mode),
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: c.isDark ? const Color(0xFF1F2A27) : const Color(0xFFF0F3F2),
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: selected ? c.primary : Colors.transparent, width: 2),
         ),
         child: Column(
           children: [
-            Container(
-              height: 76,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: prevBg, borderRadius: BorderRadius.circular(16)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                      width: 54,
-                      height: 10,
-                      decoration: BoxDecoration(color: bar1, borderRadius: BorderRadius.circular(6))),
-                  const SizedBox(height: 8),
-                  Container(
-                      height: 10,
-                      decoration: BoxDecoration(color: bar2, borderRadius: BorderRadius.circular(6))),
-                ],
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                height: 64,
+                child: mode == ThemeMode.system
+                    ? Row(children: [Expanded(child: preview(false)), Expanded(child: preview(true))])
+                    : preview(mode == ThemeMode.dark),
               ),
             ),
-            const SizedBox(height: 10),
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+            const SizedBox(height: 8),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            ),
           ],
         ),
       ),

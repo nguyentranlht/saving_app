@@ -24,7 +24,7 @@ class Backup {
   final List<Recurring> recurrings;
   final Map<String, int> budgets;
   final DateTime exportedAt;
-  final String? theme; // 'light' | 'dark'
+  final String? theme; // 'system' | 'light' | 'dark'
   final String? lang; // 'vi' | 'en'
   final int? reminderHour;
   final int? reminderMinute;

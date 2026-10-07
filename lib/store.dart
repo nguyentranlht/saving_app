@@ -57,9 +57,8 @@ class AppStore extends ChangeNotifier {
             .toList();
     final bud = s._prefs.getString('budgets');
     s.budgets = bud == null ? {} : (jsonDecode(bud) as Map<String, dynamic>).map((k, v) => MapEntry(k, v as int));
-    s.themeMode = (s._prefs.getString('theme') == 'dark')
-        ? ThemeMode.dark
-        : ThemeMode.light;
+    // 'system' | 'light' | 'dark' (trùng tên ThemeMode); cài mới thì theo hệ thống.
+    s.themeMode = ThemeMode.values.asNameMap()[s._prefs.getString('theme')] ?? ThemeMode.system;
     s.reminder = s._prefs.getBool('reminder') ?? false;
     s.reminderHour = s._prefs.getInt('reminderHour') ?? 21;
     s.reminderMinute = s._prefs.getInt('reminderMinute') ?? 0;
@@ -94,7 +93,7 @@ class AppStore extends ChangeNotifier {
     await _prefs.setString('txs', jsonEncode(txs.map((e) => e.toJson()).toList()));
     await _prefs.setString('recurrings', jsonEncode(recurrings.map((e) => e.toJson()).toList()));
     await _prefs.setString('budgets', jsonEncode(budgets));
-    await _prefs.setString('theme', themeMode == ThemeMode.dark ? 'dark' : 'light');
+    await _prefs.setString('theme', themeMode.name);
     await _prefs.setString('lang', lang.name);
     await _prefs.setBool('reminder', reminder);
     await _prefs.setInt('reminderHour', reminderHour);
@@ -402,7 +401,7 @@ class AppStore extends ChangeNotifier {
         recurrings: recurrings,
         budgets: budgets,
         exportedAt: DateTime.now(),
-        theme: themeMode == ThemeMode.dark ? 'dark' : 'light',
+        theme: themeMode.name,
         lang: lang.name,
         reminderHour: reminderHour,
         reminderMinute: reminderMinute,
@@ -420,7 +419,7 @@ class AppStore extends ChangeNotifier {
     txs = [...b.txs];
     recurrings = [for (final r in b.recurrings) Recurring.fromJson(r.toJson())];
     budgets = {...b.budgets};
-    if (b.theme != null) themeMode = b.theme == 'dark' ? ThemeMode.dark : ThemeMode.light;
+    themeMode = ThemeMode.values.asNameMap()[b.theme] ?? themeMode;
     if (b.lang == 'vi' || b.lang == 'en') {
       lang = AppLang.values.byName(b.lang!);
       S.use(lang);

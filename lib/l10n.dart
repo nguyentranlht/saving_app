@@ -344,6 +344,7 @@ class S {
   String get appearance => _('GIAO DIỆN', 'APPEARANCE');
   String get light => _('Sáng', 'Light');
   String get dark => _('Tối', 'Dark');
+  String get system => _('Hệ thống', 'System');
   String get language => _('NGÔN NGỮ', 'LANGUAGE');
   String get general => _('CHUNG', 'GENERAL');
   String get currency => _('Đơn vị tiền tệ', 'Currency');
