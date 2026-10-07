@@ -18,16 +18,28 @@ class OverviewScreen extends StatefulWidget {
 
 class _OverviewScreenState extends State<OverviewScreen> {
   TxType _type = TxType.expense;
+  DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
+
+  bool get _isCurrentMonth {
+    final n = DateTime.now();
+    return _month.year == n.year && _month.month == n.month;
+  }
+
+  void _shiftMonth(int delta) => setState(() => _month = DateTime(_month.year, _month.month + delta));
 
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
     final s = S.of(context);
-    final income = store.total(TxType.income);
-    final expense = store.total(TxType.expense);
-    final balance = income - expense;
-    final entries = store.byCategory(_type);
+    // Số dư là cộng dồn từ trước đến nay; các số còn lại tính theo tháng đang chọn.
+    final balance = store.balance;
+    final from = _month;
+    final to = DateTime(_month.year, _month.month + 1);
+    final income = store.total(TxType.income, from: from, to: to);
+    final expense = store.total(TxType.expense, from: from, to: to);
+    final monthCount = store.txs.where((t) => !t.date.isBefore(from) && t.date.isBefore(to)).length;
+    final entries = store.byCategory(_type, from: from, to: to);
     final totalType = _type == TxType.expense ? expense : income;
     final recent = store.txs.take(5).toList();
 
@@ -42,8 +54,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(greeting(), style: TextStyle(color: c.muted, fontSize: 14)),
-                  Text(s.yourBook,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                  Text(s.yourBook, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
                 ],
               ),
             ),
@@ -56,6 +67,11 @@ class _OverviewScreenState extends State<OverviewScreen> {
           ],
         ),
         const SizedBox(height: 16),
+
+        // Chọn tháng
+        // Được tới tháng sau nếu chưa phải tháng hiện tại hoặc có giao dịch ghi trước cho tương lai.
+        _monthSwitcher(c, s, canNext: !_isCurrentMonth || (store.txs.isNotEmpty && !store.txs.first.date.isBefore(to))),
+        const SizedBox(height: 12),
 
         // Thẻ số dư
         Container(
@@ -76,14 +92,12 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 children: [
                   Flexible(
                     child: Text(s.balance,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white, fontSize: 14)),
+                        overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 14)),
                   ),
                   const SizedBox(width: 8),
                   Flexible(
-                    child: Text(s.txCount(store.txs.length),
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                    child: Text(s.txCount(monthCount),
+                        overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 13)),
                   ),
                 ],
               ),
@@ -94,18 +108,16 @@ class _OverviewScreenState extends State<OverviewScreen> {
                     style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w800)),
               ),
               const SizedBox(height: 10),
-              if (balance < 0)
-                _pill(Icons.warning_amber_rounded, s.spendingOver,
-                    const Color(0xFFFFD54F), const Color(0x33FFC107)),
-              if (balance >= 0 && store.txs.isNotEmpty)
-                _pill(Icons.check_circle_outline, s.incomeOver,
-                    const Color(0xFFB9F6CA), const Color(0x2269F0AE)),
+              if (expense > income)
+                _pill(Icons.warning_amber_rounded, s.spendingOver, const Color(0xFFFFD54F), const Color(0x33FFC107)),
+              if (expense <= income && monthCount > 0)
+                _pill(Icons.check_circle_outline, s.incomeOver, const Color(0xFFB9F6CA), const Color(0x2269F0AE)),
               const SizedBox(height: 14),
               Row(
                 children: [
-                  Expanded(child: _stat(Icons.south_west, s.totalIncome, income)),
+                  Expanded(child: _stat(Icons.south_west, s.monthIncome, income)),
                   const SizedBox(width: 12),
-                  Expanded(child: _stat(Icons.north_east, s.totalExpense, expense)),
+                  Expanded(child: _stat(Icons.north_east, s.monthExpense, expense)),
                 ],
               ),
             ],
@@ -170,12 +182,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
             children: [
               Row(
                 children: [
-                  Expanded(
-                      child: Text(s.recent, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+                  Expanded(child: Text(s.recent, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
                   GestureDetector(
                     onTap: () => widget.onGoTab(1),
-                    child: Text(s.seeAll,
-                        style: TextStyle(color: c.primary, fontWeight: FontWeight.w700)),
+                    child: Text(s.seeAll, style: TextStyle(color: c.primary, fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),
@@ -192,6 +202,46 @@ class _OverviewScreenState extends State<OverviewScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _monthSwitcher(AppColors c, S s, {required bool canNext}) {
+    Widget arrow(IconData icon, VoidCallback? onTap) => IconButton(
+          onPressed: onTap,
+          icon: Icon(icon),
+          color: c.text,
+          disabledColor: c.muted.op(0.35),
+        );
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      radius: 20,
+      child: Row(
+        children: [
+          arrow(Icons.chevron_left, () => _shiftMonth(-1)),
+          Expanded(
+            child: GestureDetector(
+              // Chạm vào tên tháng để quay về tháng hiện tại.
+              onTap: _isCurrentMonth
+                  ? null
+                  : () => setState(() => _month = DateTime(DateTime.now().year, DateTime.now().month)),
+              child: Column(
+                children: [
+                  Text(s.monthYear(_month),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  if (!_isCurrentMonth)
+                    Text(s.backToThisMonth,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: c.primary, fontSize: 12, fontWeight: FontWeight.w700)),
+                ],
+              ),
+            ),
+          ),
+          arrow(Icons.chevron_right, canNext ? () => _shiftMonth(1) : null),
+        ],
+      ),
     );
   }
 
@@ -232,8 +282,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
             const SizedBox(height: 8),
             FittedBox(
               fit: BoxFit.scaleDown,
-              child: Text(vnd(v),
-                  style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+              child:
+                  Text(vnd(v), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
             ),
           ],
         ),

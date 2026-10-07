@@ -63,6 +63,14 @@ class S {
   }
 
   // ---- Tổng quan ----
+  static const _monthsLong = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
+  ];
+  String monthYear(DateTime d) => en ? '${_monthsLong[d.month - 1]} ${d.year}' : 'Tháng ${d.month}, ${d.year}';
+  String get backToThisMonth => _('Về tháng này', 'Back to this month');
+  String get monthIncome => _('Thu trong tháng', 'Month\'s income');
+  String get monthExpense => _('Chi trong tháng', 'Month\'s spending');
   String get yourBook => _('Sổ thu chi của bạn', 'Your money book');
   String get balance => _('Số dư hiện tại', 'Current balance');
   String get spendingOver => _('Chi đang nhiều hơn thu', 'Spending exceeds income');

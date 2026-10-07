@@ -75,4 +75,37 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('cafe sữa'), findsOneWidget);
   });
+
+  testWidgets('Tổng quan tính theo tháng', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({'lang': 'vi'});
+    final store = await AppStore.load();
+    final now = DateTime.now();
+    store.addTx(Tx(id: 'a', amount: 100000, type: TxType.expense, categoryId: 'food', date: now));
+    store.addTx(Tx(
+        id: 'b', amount: 70000, type: TxType.expense, categoryId: 'coffee',
+        date: DateTime(now.year, now.month - 1, 15)));
+    await tester.pumpWidget(SoThuChiApp(store: store));
+    await tester.pumpAndSettle();
+
+    // Tháng này: chỉ 100k; số dư vẫn tính tất cả (−170k).
+    expect(find.text('Tháng ${now.month}, ${now.year}'), findsOneWidget);
+    expect(find.text('−170.000đ'), findsOneWidget);
+    expect(find.text('−100.000đ'), findsNothing); // tổng chi hiển thị không dấu
+    expect(find.text('100.000đ'), findsOneWidget);
+    expect(find.text('1 giao dịch'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.chevron_left));
+    await tester.pumpAndSettle();
+    final prev = DateTime(now.year, now.month - 1);
+    expect(find.text('Tháng ${prev.month}, ${prev.year}'), findsOneWidget);
+    expect(find.text('70.000đ'), findsOneWidget);
+    expect(find.text('Về tháng này'), findsOneWidget);
+
+    await tester.tap(find.text('Về tháng này'));
+    await tester.pumpAndSettle();
+    expect(find.text('Tháng ${now.month}, ${now.year}'), findsOneWidget);
+  });
 }
