@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:so_thu_chi/format.dart';
 import 'package:so_thu_chi/l10n.dart';
 import 'package:so_thu_chi/main.dart';
 import 'package:so_thu_chi/models.dart';
@@ -107,5 +108,38 @@ void main() {
     await tester.tap(find.text('Về tháng này'));
     await tester.pumpAndSettle();
     expect(find.text('Tháng ${now.month}, ${now.year}'), findsOneWidget);
+  });
+
+  test('Tìm kiếm không cần gõ dấu', () {
+    expect(searchKey('Cà Phê Sữa Đá'), 'ca phe sua da');
+    expect(searchKey('Phở bò'), 'pho bo');
+    expect(searchKey('ĂN UỐNG'), 'an uong');
+    expect(searchKey('Ỷ Ỳ ữ'), 'y y u');
+    expect(searchKey('coffee 50k'), 'coffee 50k');
+    expect(searchKey('Pho\u031b\u0309'), 'pho'); // "Phở" gõ dạng tổ hợp
+  });
+
+  testWidgets('Ô tìm kiếm khớp cả khi không gõ dấu', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({'lang': 'vi'});
+    final store = await AppStore.load();
+    final now = DateTime.now();
+    store.addTx(Tx(id: 'a', amount: 50000, type: TxType.expense, categoryId: 'food', note: 'phở bò', date: now));
+    store.addTx(Tx(id: 'b', amount: 30000, type: TxType.expense, categoryId: 'move', note: 'grab', date: now));
+    await tester.pumpWidget(SoThuChiApp(store: store));
+    await tester.tap(find.text('Lịch sử').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'pho');
+    await tester.pump();
+    expect(find.textContaining('phở bò'), findsOneWidget);
+    expect(find.textContaining('grab'), findsNothing);
+
+    await tester.enterText(find.byType(TextField), 'di chuyen'); // tên danh mục "Di chuyển"
+    await tester.pump();
+    expect(find.textContaining('grab'), findsOneWidget);
+    expect(find.textContaining('phở bò'), findsNothing);
   });
 }

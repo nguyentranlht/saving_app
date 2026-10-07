@@ -46,3 +46,29 @@ String dayLabel(DateTime d, [DateTime? now]) {
 }
 
 String greeting([DateTime? now]) => S.current.greeting((now ?? DateTime.now()).hour);
+
+const _accents = {
+  'a': 'àáảãạăằắẳẵặâầấẩẫậ',
+  'e': 'èéẻẽẹêềếểễệ',
+  'i': 'ìíỉĩị',
+  'o': 'òóỏõọôồốổỗộơờớởỡợ',
+  'u': 'ùúủũụưừứửữự',
+  'y': 'ỳýỷỹỵ',
+  'd': 'đ',
+};
+final _plain = {
+  for (final e in _accents.entries)
+    for (final ch in e.value.split('')) ch: e.key,
+};
+
+/// Chuẩn hóa để tìm kiếm: chữ thường, bỏ dấu tiếng Việt ("Cà Phê" -> "ca phe").
+String searchKey(String s) {
+  final lower = s.toLowerCase();
+  final b = StringBuffer();
+  for (final ch in lower.split('')) {
+    final u = ch.codeUnitAt(0);
+    if (u >= 0x0300 && u <= 0x036F) continue; // dấu rời (Unicode dạng tổ hợp)
+    b.write(_plain[ch] ?? ch);
+  }
+  return b.toString();
+}

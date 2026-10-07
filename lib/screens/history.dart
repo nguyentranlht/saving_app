@@ -74,7 +74,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
     final s = S.of(context);
-    final q = _searchCtl.text.trim().toLowerCase();
+    final q = searchKey(_searchCtl.text.trim());
     final (from, to) = periodRange(_period, DateTime.now(), _custom);
 
     final list = store.txs.where((t) {
@@ -84,8 +84,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (to != null && !t.date.isBefore(to)) return false;
       if (_cats.isNotEmpty && !_cats.contains(t.categoryId)) return false;
       if (q.isEmpty) return true;
-      final name = s.catName(store.cat(t.categoryId)).toLowerCase();
-      return name.contains(q) || t.note.toLowerCase().contains(q);
+      return searchKey(s.catName(store.cat(t.categoryId))).contains(q) || searchKey(t.note).contains(q);
     }).toList();
 
     // Nhóm theo ngày (txs đã sắp xếp giảm dần).
