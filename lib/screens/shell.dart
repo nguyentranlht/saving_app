@@ -105,9 +105,15 @@ class _ShellState extends State<Shell> {
           children: [
             Icon(sel ? activeIcon : icon, color: col, size: 24),
             const SizedBox(height: 3),
-            Text(label,
-                style: TextStyle(
-                    color: col, fontSize: 11.5, fontWeight: sel ? FontWeight.w800 : FontWeight.w500)),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(label,
+                    maxLines: 1,
+                    style: TextStyle(
+                        color: col, fontSize: 11.5, fontWeight: sel ? FontWeight.w800 : FontWeight.w500)),
+              ),
+            ),
           ],
         ),
       ),

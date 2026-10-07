@@ -181,8 +181,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                       alignment: Alignment.center,
                                       decoration: BoxDecoration(
                                           color: c.chip, borderRadius: BorderRadius.circular(16)),
-                                      child: Text('+${compact(v)}',
-                                          style: const TextStyle(fontWeight: FontWeight.w800)),
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text('+${compact(v)}',
+                                            style: const TextStyle(fontWeight: FontWeight.w800)),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -195,13 +198,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   const SizedBox(height: 18),
                   Text(s.category, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 10),
-                  GridView.count(
-                    crossAxisCount: 4,
+                  GridView(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 0.86,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      mainAxisSpacing: 10,
+                      crossAxisSpacing: 10,
+                      // Ô cao theo cỡ chữ: đệm + viền 16, icon 46, khoảng cách 8, 2 dòng tên.
+                      mainAxisExtent: 72 + MediaQuery.textScalerOf(context).scale(13) * 1.5 * 2,
+                    ),
                     children: [
                       for (final cat in cats)
                         GestureDetector(

@@ -76,6 +76,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(s.catName(cats[i]),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
                                   Text(s.txCount(store.countIn(cats[i].id)),
                                       style: TextStyle(color: c.muted, fontSize: 14)),
@@ -105,8 +107,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   children: [
                     Icon(Icons.add, color: c.primary),
                     const SizedBox(width: 8),
-                    Text(s.addCategory,
-                        style: TextStyle(color: c.primary, fontWeight: FontWeight.w800, fontSize: 17)),
+                    Flexible(
+                      child: Text(s.addCategory,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: c.primary, fontWeight: FontWeight.w800, fontSize: 17)),
+                    ),
                   ],
                 ),
               ),

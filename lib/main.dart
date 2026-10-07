@@ -36,6 +36,8 @@ class SoThuChiApp extends StatelessWidget {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          // Chữ hệ thống quá lớn sẽ phá bố cục; vẫn cho phóng to nhưng giới hạn.
+          builder: (context, child) => MediaQuery.withClampedTextScaling(maxScaleFactor: 1.3, child: child!),
           home: const Shell(),
         ),
       ),

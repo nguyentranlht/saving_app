@@ -50,7 +50,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(child: Text(s.tabHistory, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800))),
-            Text(s.txTotal(store.txs.length), style: TextStyle(color: c.muted, fontSize: 13)),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(s.txTotal(store.txs.length),
+                  textAlign: TextAlign.right, style: TextStyle(color: c.muted, fontSize: 13)),
+            ),
           ],
         ),
         const SizedBox(height: 14),
@@ -68,25 +72,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        Row(
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
           children: [
             for (final (i, l) in [s.all, s.expense, s.income].indexed)
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: GestureDetector(
-                  onTap: () => setState(() => _filter = i),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _filter == i ? c.heroStart : c.card,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: _filter == i ? c.heroStart : c.divider),
-                    ),
-                    child: Text(l,
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: _filter == i ? Colors.white : c.text)),
+              GestureDetector(
+                onTap: () => setState(() => _filter = i),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _filter == i ? c.heroStart : c.card,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: _filter == i ? c.heroStart : c.divider),
                   ),
+                  child: Text(l,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: _filter == i ? Colors.white : c.text)),
                 ),
               ),
           ],
@@ -100,9 +103,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 Expanded(
                     child: Text(dayLabel(g.first.date),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
-                Text('${s.net} ${vnd(g.fold(0, (s, t) => s + t.signed), sign: true)}',
-                    style: TextStyle(color: c.muted, fontSize: 13)),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text('${s.net} ${vnd(g.fold(0, (s, t) => s + t.signed), sign: true)}',
+                        style: TextStyle(color: c.muted, fontSize: 13)),
+                  ),
+                ),
               ],
             ),
           ),

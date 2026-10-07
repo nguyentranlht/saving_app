@@ -131,10 +131,21 @@ class _StatsScreenState extends State<StatsScreen> {
                 children: [
                   Expanded(
                       child: Text(s.incomeAndExpense,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
-                  _dot(c.income, s.incomeShort),
-                  const SizedBox(width: 14),
-                  _dot(c.expense, s.expenseShort),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Row(children: [
+                        _dot(c.income, s.incomeShort),
+                        const SizedBox(width: 14),
+                        _dot(c.expense, s.expenseShort),
+                      ]),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 18),

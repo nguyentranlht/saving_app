@@ -74,9 +74,17 @@ class _OverviewScreenState extends State<OverviewScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(s.balance, style: const TextStyle(color: Colors.white, fontSize: 14)),
-                  Text(s.txCount(store.txs.length),
-                      style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  Flexible(
+                    child: Text(s.balance,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white, fontSize: 14)),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(s.txCount(store.txs.length),
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -195,7 +203,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon, size: 16, color: fg),
             const SizedBox(width: 6),
-            Text(text, style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 13)),
+            Flexible(child: Text(text, style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 13))),
           ]),
         ),
       );
@@ -214,7 +222,12 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: Icon(icon, size: 14, color: Colors.white),
               ),
               const SizedBox(width: 8),
-              Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+              Expanded(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13)),
+              ),
             ]),
             const SizedBox(height: 8),
             FittedBox(
@@ -244,7 +257,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
               child: Icon(icon, color: fg, size: 24),
             ),
             const SizedBox(height: 8),
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(label, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            ),
           ],
         ),
       ),
@@ -264,11 +280,15 @@ class _OverviewScreenState extends State<OverviewScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(s.catName(e.key), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                Text(s.catName(e.key),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 Text(pctText, style: TextStyle(color: c.muted, fontSize: 12.5)),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Text(compact(e.value), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
         ],
       ),

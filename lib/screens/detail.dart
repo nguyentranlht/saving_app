@@ -30,91 +30,103 @@ class DetailScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  CircleBtn(icon: Icons.chevron_left, onTap: () => Navigator.of(context).pop()),
-                  Expanded(
-                    child: Center(
-                      child: Text(s.txDetail,
-                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-                    ),
-                  ),
-                  const SizedBox(width: 46),
-                ],
-              ),
-              const SizedBox(height: 16),
-              AppCard(
-                padding: const EdgeInsets.symmetric(vertical: 28),
-                radius: 30,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Column(
-                    children: [
-                      CatIcon(category: cat, size: 76),
-                      const SizedBox(height: 12),
-                      Text(s.catName(cat),
-                          style: TextStyle(color: c.muted, fontSize: 18, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 8),
-                      Text(vnd(tx.signed),
-                          style: TextStyle(color: color, fontSize: 44, fontWeight: FontWeight.w800)),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-                        decoration: BoxDecoration(color: color.op(0.14), borderRadius: BorderRadius.circular(20)),
-                        child: Text(tx.type == TxType.expense ? s.expense : s.income,
-                            style: TextStyle(color: color, fontWeight: FontWeight.w800)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              AppCard(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 6),
-                radius: 28,
+        // Cuộn được khi chữ lớn; nội dung ngắn thì nút vẫn nằm ở đáy.
+        child: LayoutBuilder(
+          builder: (context, box) => SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: box.maxHeight - 28),
+              child: IntrinsicHeight(
                 child: Column(
                   children: [
-                    _row(c, s.category, cat == null ? '—' : s.catName(cat), bold: true),
-                    Divider(height: 1, color: c.divider),
-                    _row(c, s.time, '${hm(tx.date)} · ${dm(tx.date)}, ${tx.date.year}',
-                        bold: true),
-                    Divider(height: 1, color: c.divider),
-                    _row(c, s.note, tx.note.isEmpty ? s.noNote : tx.note),
+                    Row(
+                      children: [
+                        CircleBtn(icon: Icons.chevron_left, onTap: () => Navigator.of(context).pop()),
+                        Expanded(
+                          child: Center(
+                            child: Text(s.txDetail, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                          ),
+                        ),
+                        const SizedBox(width: 46),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    AppCard(
+                      padding: const EdgeInsets.symmetric(vertical: 28),
+                      radius: 30,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          children: [
+                            CatIcon(category: cat, size: 76),
+                            const SizedBox(height: 12),
+                            Text(s.catName(cat),
+                                style: TextStyle(color: c.muted, fontSize: 18, fontWeight: FontWeight.w700)),
+                            const SizedBox(height: 8),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(vnd(tx.signed),
+                                    style: TextStyle(color: color, fontSize: 44, fontWeight: FontWeight.w800)),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                              decoration: BoxDecoration(color: color.op(0.14), borderRadius: BorderRadius.circular(20)),
+                              child: Text(tx.type == TxType.expense ? s.expense : s.income,
+                                  style: TextStyle(color: color, fontWeight: FontWeight.w800)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    AppCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 6),
+                      radius: 28,
+                      child: Column(
+                        children: [
+                          _row(c, s.category, cat == null ? '—' : s.catName(cat), bold: true),
+                          Divider(height: 1, color: c.divider),
+                          _row(c, s.time, '${hm(tx.date)} · ${dm(tx.date)}, ${tx.date.year}', bold: true),
+                          Divider(height: 1, color: c.divider),
+                          _row(c, s.note, tx.note.isEmpty ? s.noNote : tx.note),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _btn(
+                            icon: Icons.edit_outlined,
+                            label: s.edit,
+                            bg: c.card,
+                            fg: c.text,
+                            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                              fullscreenDialog: true,
+                              builder: (_) => AddTransactionScreen(editing: tx),
+                            )),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _btn(
+                            icon: Icons.delete_outline,
+                            label: s.delete,
+                            bg: c.expense.op(0.15),
+                            fg: c.expense,
+                            onTap: () => _confirmDelete(context, store, tx),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              const Spacer(),
-              Row(
-                children: [
-                  Expanded(
-                    child: _btn(
-                      icon: Icons.edit_outlined,
-                      label: s.edit,
-                      bg: c.card,
-                      fg: c.text,
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        fullscreenDialog: true,
-                        builder: (_) => AddTransactionScreen(editing: tx),
-                      )),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _btn(
-                      icon: Icons.delete_outline,
-                      label: s.delete,
-                      bg: c.expense.op(0.15),
-                      fg: c.expense,
-                      onTap: () => _confirmDelete(context, store, tx),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -174,7 +186,12 @@ class DetailScreen extends StatelessWidget {
             children: [
               Icon(icon, color: fg),
               const SizedBox(width: 8),
-              Text(label, style: TextStyle(color: fg, fontSize: 18, fontWeight: FontWeight.w800)),
+              Flexible(
+                child: Text(label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: fg, fontSize: 18, fontWeight: FontWeight.w800)),
+              ),
             ],
           ),
         ),

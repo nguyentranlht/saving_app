@@ -179,12 +179,16 @@ class Segmented extends StatelessWidget {
                     color: i == index ? (c.isDark ? const Color(0xFF2F3F3A) : Colors.white) : Colors.transparent,
                     borderRadius: BorderRadius.circular(height),
                   ),
-                  child: Text(
-                    labels[i],
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: i == index ? (activeColors?[i] ?? c.text) : c.muted,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      labels[i],
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: i == index ? (activeColors?[i] ?? c.text) : c.muted,
+                      ),
                     ),
                   ),
                 ),
@@ -244,6 +248,8 @@ class TxTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(s.catName(cat),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 2),
                   Text(tx.note.isEmpty ? sub : '$sub · ${tx.note}',
@@ -253,12 +259,19 @@ class TxTile extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              vnd(tx.signed, sign: true),
-              style: TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
-                color: tx.type == TxType.expense ? c.expense : c.income,
+            const SizedBox(width: 8),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerRight,
+                child: Text(
+                  vnd(tx.signed, sign: true),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                    color: tx.type == TxType.expense ? c.expense : c.income,
+                  ),
+                ),
               ),
             ),
           ],
@@ -289,7 +302,13 @@ class DonutChart extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(centerTop, style: TextStyle(color: c.muted, fontSize: 13)),
-              Text(centerBottom, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 26)),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: size - 70),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(centerBottom, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 26)),
+                ),
+              ),
             ],
           ),
         ],
