@@ -16,6 +16,7 @@ class AppStore extends ChangeNotifier {
 
   List<Category> categories = [];
   List<Tx> txs = [];
+  List<Recurring> recurrings = [];
   ThemeMode themeMode = ThemeMode.light;
   AppLang lang = AppLang.vi;
   bool reminder = false;
@@ -42,6 +43,12 @@ class AppStore extends ChangeNotifier {
         : (jsonDecode(list) as List)
             .map((e) => Tx.fromJson(e as Map<String, dynamic>))
             .toList();
+    final recs = s._prefs.getString('recurrings');
+    s.recurrings = recs == null
+        ? []
+        : (jsonDecode(recs) as List)
+            .map((e) => Recurring.fromJson(e as Map<String, dynamic>))
+            .toList();
     s.themeMode = (s._prefs.getString('theme') == 'dark')
         ? ThemeMode.dark
         : ThemeMode.light;
@@ -51,6 +58,7 @@ class AppStore extends ChangeNotifier {
     final lb = s._prefs.getString('lastBackup');
     s.lastBackup = lb == null ? null : DateTime.tryParse(lb);
     s._sort();
+    s.runRecurring();
     return s;
   }
 
@@ -75,6 +83,7 @@ class AppStore extends ChangeNotifier {
     await _prefs.setString(
         'categories', jsonEncode(categories.map((e) => e.toJson()).toList()));
     await _prefs.setString('txs', jsonEncode(txs.map((e) => e.toJson()).toList()));
+    await _prefs.setString('recurrings', jsonEncode(recurrings.map((e) => e.toJson()).toList()));
     await _prefs.setString('theme', themeMode == ThemeMode.dark ? 'dark' : 'light');
     await _prefs.setString('lang', lang.name);
     await _prefs.setBool('reminder', reminder);
@@ -151,6 +160,65 @@ class AppStore extends ChangeNotifier {
     _commit();
   }
 
+  // ---- Giao dịch định kỳ ----
+  Recurring? recurring(String id) {
+    for (final r in recurrings) {
+      if (r.id == id) return r;
+    }
+    return null;
+  }
+
+  /// Tạo các giao dịch định kỳ đã đến hạn (gọi lúc mở app / quay lại app).
+  /// Trả về số giao dịch đã tạo.
+  int runRecurring([DateTime? now]) {
+    now ??= DateTime.now();
+    final ids = {for (final t in txs) t.id};
+    var made = 0;
+    for (final r in recurrings) {
+      if (!r.active) continue;
+      // Giới hạn để không treo app nếu đặt ngày bắt đầu quá xa trong quá khứ.
+      while (made < 1000 && !r.next.isAfter(now)) {
+        final t = r.makeTx(r.nextIndex);
+        if (ids.add(t.id)) txs.add(t);
+        r.lastGenerated = t.date;
+        r.nextIndex++;
+        made++;
+      }
+    }
+    if (made > 0) _commit();
+    return made;
+  }
+
+  void addRecurring(Recurring r) {
+    recurrings.add(r);
+    if (runRecurring() == 0) _commit();
+  }
+
+  /// Sửa giao dịch định kỳ; chỉ ảnh hưởng các lần sau. Nếu đổi lịch (ngày / tần suất)
+  /// thì tính lại lần kế tiếp, bỏ qua những lần trước lần đã tạo gần nhất.
+  void updateRecurring(Recurring r, {required bool scheduleChanged}) {
+    final i = recurrings.indexWhere((x) => x.id == r.id);
+    if (i < 0) return;
+    if (scheduleChanged) {
+      r.nextIndex = r.lastGenerated == null ? 0 : r.firstIndexAfter(r.lastGenerated!);
+    }
+    recurrings[i] = r;
+    if (runRecurring() == 0) _commit();
+  }
+
+  /// Tạm dừng / tiếp tục. Các lần lỡ trong lúc tạm dừng sẽ không được tạo bù.
+  void setRecurringActive(Recurring r, bool v) {
+    r.active = v;
+    if (v) r.nextIndex = r.firstIndexAfter(DateTime.now());
+    _commit();
+  }
+
+  /// Xóa giao dịch định kỳ; các giao dịch đã ghi trước đó vẫn được giữ.
+  void deleteRecurring(String id) {
+    recurrings.removeWhere((x) => x.id == id);
+    _commit();
+  }
+
   // ---- Danh mục ----
   void upsertCategory(Category c) {
     final i = categories.indexWhere((x) => x.id == c.id);
@@ -216,6 +284,7 @@ class AppStore extends ChangeNotifier {
   Backup toBackup() => Backup(
         categories: categories,
         txs: txs,
+        recurrings: recurrings,
         exportedAt: DateTime.now(),
         theme: themeMode == ThemeMode.dark ? 'dark' : 'light',
         lang: lang.name,
@@ -233,6 +302,7 @@ class AppStore extends ChangeNotifier {
   Future<void> restore(Backup b) async {
     categories = [...b.categories];
     txs = [...b.txs];
+    recurrings = [for (final r in b.recurrings) Recurring.fromJson(r.toJson())];
     if (b.theme != null) themeMode = b.theme == 'dark' ? ThemeMode.dark : ThemeMode.light;
     if (b.lang == 'vi' || b.lang == 'en') {
       lang = AppLang.values.byName(b.lang!);
@@ -243,11 +313,13 @@ class AppStore extends ChangeNotifier {
       reminderMinute = b.reminderMinute!;
     }
     _commit();
+    runRecurring(); // tạo các lần đến hạn kể từ lúc sao lưu
     await syncReminder();
   }
 
   Future<void> clearAll() async {
     txs = [];
+    recurrings = [];
     categories = defaultCategories();
     reminder = false;
     await Reminder.cancel();
@@ -279,4 +351,7 @@ class StoreScope extends InheritedNotifier<AppStore> {
 
   static AppStore of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<StoreScope>()!.notifier!;
+
+  /// Lấy store mà không đăng ký vẽ lại (dùng trong callback).
+  static AppStore read(BuildContext context) => context.getInheritedWidgetOfExactType<StoreScope>()!.notifier!;
 }

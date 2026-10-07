@@ -26,6 +26,7 @@ class DetailScreen extends StatelessWidget {
       return const Scaffold();
     }
     final cat = store.cat(tx.categoryId);
+    final rule = tx.recurringId == null ? null : store.recurring(tx.recurringId!);
     final color = tx.type == TxType.expense ? c.expense : c.income;
 
     return Scaffold(
@@ -93,6 +94,17 @@ class DetailScreen extends StatelessWidget {
                           _row(c, s.time, '${hm(tx.date)} · ${dm(tx.date)}, ${tx.date.year}', bold: true),
                           Divider(height: 1, color: c.divider),
                           _row(c, s.note, tx.note.isEmpty ? s.noNote : tx.note),
+                          // Giao dịch tự ghi từ định kỳ: chạm để sửa / tạm dừng định kỳ đó.
+                          if (rule != null) ...[
+                            Divider(height: 1, color: c.divider),
+                            InkWell(
+                              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                                fullscreenDialog: true,
+                                builder: (_) => AddTransactionScreen(editingRule: rule),
+                              )),
+                              child: _row(c, s.repeat, s.freqDetail(rule.freq, rule.anchor), bold: true),
+                            ),
+                          ],
                         ],
                       ),
                     ),

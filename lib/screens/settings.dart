@@ -8,6 +8,7 @@ import '../store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'categories.dart';
+import 'recurring.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -60,6 +61,15 @@ class SettingsScreen extends StatelessWidget {
                       .push(MaterialPageRoute(builder: (_) => const CategoriesScreen())),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     Text('${store.categories.length}', style: TextStyle(color: c.muted, fontSize: 16)),
+                    const SizedBox(width: 6),
+                    Icon(Icons.chevron_right, color: c.muted),
+                  ])),
+              Divider(height: 1, color: c.divider),
+              _row(c, Icons.repeat, const Color(0xFF14B8A6), s.recurringTitle,
+                  onTap: () => Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (_) => const RecurringScreen())),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text('${store.recurrings.length}', style: TextStyle(color: c.muted, fontSize: 16)),
                     const SizedBox(width: 6),
                     Icon(Icons.chevron_right, color: c.muted),
                   ])),

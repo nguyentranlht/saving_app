@@ -96,6 +96,40 @@ class S {
   String get saveExpense => _('Lưu khoản chi', 'Save expense');
   String get saveIncome => _('Lưu khoản thu', 'Save income');
 
+  // ---- Giao dịch định kỳ ----
+  String get repeat => _('Lặp lại', 'Repeat');
+  String freqName(Freq? f) => switch (f) {
+        null => _('Không lặp', 'Never'),
+        Freq.daily => _('Hằng ngày', 'Daily'),
+        Freq.weekly => _('Hằng tuần', 'Weekly'),
+        Freq.monthly => _('Hằng tháng', 'Monthly'),
+        Freq.yearly => _('Hằng năm', 'Yearly'),
+      };
+
+  /// "Hằng tháng · ngày 5", "Hằng tuần · T2", "Hằng năm · 5 thg 10", "Hằng ngày · 21:00".
+  String freqDetail(Freq f, DateTime anchor) => '${freqName(f)} · ${switch (f) {
+        Freq.daily => hm(anchor),
+        Freq.weekly => weekdays[anchor.weekday - 1],
+        Freq.monthly => _('ngày ${anchor.day}', 'day ${anchor.day}'),
+        Freq.yearly => dayMonth(anchor),
+      }}';
+  String nextOn(DateTime d) => _('Lần tới: ${dayMonth(d)}, ${d.year}', 'Next: ${dayMonth(d)}, ${d.year}');
+  String get startsOn => _('Bắt đầu', 'Starts');
+  String get nextLabel => _('Lần tới', 'Next');
+  String get paused => _('Đang tạm dừng', 'Paused');
+  String get recurringTitle => _('Giao dịch định kỳ', 'Recurring');
+  String get recurringBadge => _('Định kỳ', 'Recurring');
+  String get editRecurring => _('Sửa định kỳ', 'Edit recurring');
+  String get addRecurring => _('Thêm giao dịch định kỳ', 'Add recurring transaction');
+  String get recurringEmpty => _('Chưa có giao dịch định kỳ.\nThêm tiền nhà, lương, Netflix… để app tự ghi khi đến hạn.',
+      'No recurring transactions yet.\nAdd rent, salary, Netflix… and the app records them when due.');
+  String get recurringHint => _('Giao dịch được tự ghi khi đến hạn, mỗi lần bạn mở app. Sửa chỉ áp dụng cho các lần sau.',
+      'Transactions are recorded automatically when due, whenever you open the app. Edits apply to future ones only.');
+  String get deleteRecurringQ => _('Xóa giao dịch định kỳ?', 'Delete recurring transaction?');
+  String get deleteRecurringBody =>
+      _('App sẽ ngừng tự ghi. Các giao dịch đã ghi trước đó vẫn được giữ lại.',
+          'It will stop recording. Transactions already recorded are kept.');
+
   // ---- Lịch sử ----
   String txTotal(int n) => en ? '$n transaction${n == 1 ? '' : 's'} in total' : '$n giao dịch tất cả';
   String get searchHint => _('Tìm danh mục hoặc ghi chú', 'Search category or note');

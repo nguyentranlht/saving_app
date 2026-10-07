@@ -20,9 +20,14 @@ class _MoneyFormatter extends TextInputFormatter {
 }
 
 class AddTransactionScreen extends StatefulWidget {
-  const AddTransactionScreen({super.key, this.initialType = TxType.expense, this.editing});
+  const AddTransactionScreen(
+      {super.key, this.initialType = TxType.expense, this.editing, this.editingRule, this.initialFreq});
   final TxType initialType;
   final Tx? editing;
+
+  /// Sửa một giao dịch định kỳ (thay vì một giao dịch).
+  final Recurring? editingRule;
+  final Freq? initialFreq;
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
@@ -32,21 +37,26 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   late TxType _type;
   String? _catId;
   late DateTime _date;
+  Freq? _freq; // null = không lặp
   final _amountCtl = TextEditingController();
   final _noteCtl = TextEditingController();
 
   int get _amount => int.tryParse(_amountCtl.text.replaceAll('.', '')) ?? 0;
 
+  bool get _ruleMode => widget.editingRule != null;
+
   @override
   void initState() {
     super.initState();
     final e = widget.editing;
-    _type = e?.type ?? widget.initialType;
-    _date = e?.date ?? DateTime.now();
-    if (e != null) {
-      _catId = e.categoryId;
-      _amountCtl.text = groupDigits(e.amount);
-      _noteCtl.text = e.note;
+    final rule = widget.editingRule;
+    _type = rule?.type ?? e?.type ?? widget.initialType;
+    _date = rule?.next ?? e?.date ?? DateTime.now();
+    _freq = rule?.freq ?? widget.initialFreq;
+    if (e != null || rule != null) {
+      _catId = rule?.categoryId ?? e!.categoryId;
+      _amountCtl.text = groupDigits(rule?.amount ?? e!.amount);
+      _noteCtl.text = rule?.note ?? e!.note;
     }
   }
 
@@ -66,7 +76,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       context: context,
       initialDate: _date,
       firstDate: DateTime(2000),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      lastDate: DateTime.now().add(Duration(days: _freq == null ? 365 : 365 * 3)),
     );
     if (d == null || !mounted) return;
     final t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_date));
@@ -74,10 +84,83 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     setState(() => _date = DateTime(d.year, d.month, d.day, t?.hour ?? _date.hour, t?.minute ?? _date.minute));
   }
 
+  Future<void> _pickFreq(S s) async {
+    final c = AppColors.of(context);
+    final options = <Freq?>[if (!_ruleMode) null, ...Freq.values];
+    final picked = await showModalBottomSheet<(Freq?,)>(
+      context: context,
+      backgroundColor: c.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final f in options)
+                ListTile(
+                  title: Text(f == null ? s.freqName(null) : s.freqDetail(f, _date),
+                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                  trailing: _freq == f ? Icon(Icons.check, color: c.primary) : null,
+                  onTap: () => Navigator.pop(ctx, (f,)),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked != null) setState(() => _freq = picked.$1);
+  }
+
+  Future<void> _deleteRule(AppStore store, S s) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.deleteRecurringQ),
+        content: Text(s.deleteRecurringBody),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(s.cancel)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(s.delete)),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    store.deleteRecurring(widget.editingRule!.id);
+    Navigator.of(context).pop();
+  }
+
   void _save(AppStore store) {
     final catId = _catId ?? store.catsOf(_type).first.id;
     final e = widget.editing;
-    if (e == null) {
+    final rule = widget.editingRule;
+    if (rule != null) {
+      final scheduleChanged = rule.freq != _freq || _date != rule.next;
+      store.updateRecurring(
+        Recurring(
+          id: rule.id,
+          amount: _amount,
+          type: _type,
+          categoryId: catId,
+          note: _noteCtl.text.trim(),
+          freq: _freq!,
+          anchor: scheduleChanged ? _date : rule.anchor,
+          nextIndex: rule.nextIndex,
+          lastGenerated: rule.lastGenerated,
+          active: rule.active,
+        ),
+        scheduleChanged: scheduleChanged,
+      );
+    } else if (e == null && _freq != null) {
+      store.addRecurring(Recurring(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        amount: _amount,
+        type: _type,
+        categoryId: catId,
+        note: _noteCtl.text.trim(),
+        freq: _freq!,
+        anchor: _date,
+      ));
+    } else if (e == null) {
       store.addTx(Tx(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
         amount: _amount,
@@ -94,6 +177,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         categoryId: catId,
         note: _noteCtl.text.trim(),
         date: _date,
+        recurringId: e.recurringId,
       ));
     }
     Navigator.of(context).pop();
@@ -122,11 +206,14 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       CircleBtn(icon: Icons.close, onTap: () => Navigator.of(context).pop()),
                       Expanded(
                         child: Center(
-                          child: Text(widget.editing == null ? s.newTx : s.editTx,
+                          child: Text(_ruleMode ? s.editRecurring : (widget.editing == null ? s.newTx : s.editTx),
                               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                         ),
                       ),
-                      const SizedBox(width: 46),
+                      if (_ruleMode)
+                        CircleBtn(icon: Icons.delete_outline, fg: c.expense, onTap: () => _deleteRule(store, s))
+                      else
+                        const SizedBox(width: 46),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -267,13 +354,42 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 Icon(Icons.calendar_today_outlined, color: c.muted),
                                 const SizedBox(width: 14),
                                 Expanded(
-                                    child: Text('${dayLabel(_date).replaceFirst(' · ', ', ')} · ${hm(_date)}',
+                                    child: Text(
+                                        '${_freq == null ? '' : '${_ruleMode ? s.nextLabel : s.startsOn}: '}'
+                                        '${dayLabel(_date).replaceFirst(' · ', ', ')} · ${hm(_date)}',
                                         style: const TextStyle(fontSize: 16))),
                                 Text(s.change, style: TextStyle(color: c.muted, fontSize: 15)),
                               ],
                             ),
                           ),
                         ),
+                        // Lặp lại: chỉ khi ghi mới hoặc sửa giao dịch định kỳ.
+                        if (widget.editing == null) ...[
+                          Divider(height: 1, color: c.divider),
+                          InkWell(
+                            onTap: () => _pickFreq(s),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.repeat, color: _freq == null ? c.muted : c.primary),
+                                  const SizedBox(width: 14),
+                                  Expanded(child: Text(s.repeat, style: const TextStyle(fontSize: 16))),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(_freq == null ? s.freqName(null) : s.freqDetail(_freq!, _date),
+                                        textAlign: TextAlign.right,
+                                        maxLines: 2,
+                                        style: TextStyle(
+                                            color: _freq == null ? c.muted : c.primary,
+                                            fontSize: 15,
+                                            fontWeight: _freq == null ? FontWeight.w400 : FontWeight.w700)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

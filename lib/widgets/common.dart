@@ -232,7 +232,8 @@ class TxTile extends StatelessWidget {
     final store = StoreScope.of(context);
     final s = S.of(context);
     final cat = store.cat(tx.categoryId);
-    final sub = '${hm(tx.date)} · ${tx.type == TxType.expense ? s.expense : s.income}';
+    final sub = '${hm(tx.date)} · ${tx.type == TxType.expense ? s.expense : s.income}'
+        '${tx.recurringId == null ? '' : ' · ${s.recurringBadge}'}';
     return InkWell(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => DetailScreen(txId: tx.id)),

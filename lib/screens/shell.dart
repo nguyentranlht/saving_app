@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n.dart';
 import '../models.dart';
+import '../store.dart';
 import '../theme.dart';
 import 'add_transaction.dart';
 import 'history.dart';
@@ -24,8 +25,26 @@ class Shell extends StatefulWidget {
   State<Shell> createState() => _ShellState();
 }
 
-class _ShellState extends State<Shell> {
+class _ShellState extends State<Shell> with WidgetsBindingObserver {
   int _tab = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Quay lại app (ví dụ sang ngày mới) thì ghi các giao dịch định kỳ đã đến hạn.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) StoreScope.read(context).runRecurring();
+  }
 
   void _go(int i) => setState(() => _tab = i);
 

@@ -8,6 +8,7 @@ import 'package:so_thu_chi/models.dart';
 import 'package:so_thu_chi/screens/add_transaction.dart';
 import 'package:so_thu_chi/screens/categories.dart';
 import 'package:so_thu_chi/screens/detail.dart';
+import 'package:so_thu_chi/screens/recurring.dart';
 import 'package:so_thu_chi/store.dart';
 
 /// Dựng các màn hình ở cỡ iPhone nhỏ với chữ hệ thống phóng to; lỗi tràn chữ
@@ -32,6 +33,8 @@ void main() {
           store.upsertCategory(Category(id: 'x', name: 'Danh mục có tên rất dài để thử', icon: 'food',
               color: 0xFF3B82F6, type: TxType.expense));
 
+          store.addRecurring(Recurring(id: 'rec', amount: 15000000, type: TxType.expense, categoryId: 'x',
+              note: 'Tiền thuê nhà chung cư hằng tháng', freq: Freq.monthly, anchor: DateTime(now.year, now.month, 1)));
           await tester.pumpWidget(SoThuChiApp(store: store));
           await tester.pumpAndSettle();
           final s = S.current;
@@ -46,6 +49,8 @@ void main() {
             const AddTransactionScreen(initialType: TxType.income),
             const DetailScreen(txId: '1'),
             const CategoriesScreen(),
+            const RecurringScreen(),
+            AddTransactionScreen(editingRule: store.recurring('rec')),
           ]) {
             nav.push(MaterialPageRoute(builder: (_) => page));
             await tester.pumpAndSettle();
