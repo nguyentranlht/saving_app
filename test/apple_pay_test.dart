@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -52,6 +51,26 @@ void main() {
     expect(await store.importPending(), 0);
   });
 
+  test('Menu Sổ thu chi: dùng đúng danh mục đã chọn, chọn danh mục thu thì ghi là khoản thu', () async {
+    SharedPreferences.setMockInitialValues({
+      'lang': 'vi',
+      'pendingTxs': pending([
+        {'amount': '45000', 'categoryId': 'coffee', 'type': 'expense', 'note': 'bạc xỉu', 'date': '2026-10-07T01:00:00Z'},
+        {'amount': '15000000', 'categoryId': 'salary', 'type': 'income', 'note': '', 'date': '2026-10-07T02:00:00Z'},
+        {'amount': '20000', 'categoryId': 'da_xoa', 'type': 'expense', 'note': '', 'date': '2026-10-07T03:00:00Z'},
+      ]),
+    });
+    final store = await AppStore.load();
+    store.setAutoCategory('food');
+    expect(await store.importPending(), 3);
+    final coffee = store.txs.firstWhere((t) => t.amount == 45000);
+    expect((coffee.categoryId, coffee.type, coffee.note), ('coffee', TxType.expense, 'bạc xỉu'));
+    final salary = store.txs.firstWhere((t) => t.amount == 15000000);
+    expect((salary.categoryId, salary.type), ('salary', TxType.income));
+    // Danh mục đã bị xóa trong app -> dùng danh mục mặc định.
+    expect(store.txs.firstWhere((t) => t.amount == 20000).categoryId, 'food');
+  });
+
   test('Hàng chờ hỏng không làm hỏng app', () async {
     SharedPreferences.setMockInitialValues({'lang': 'vi', 'pendingTxs': 'không phải json'});
     final store = await AppStore.load();
@@ -69,8 +88,17 @@ void main() {
     await tester.pumpWidget(SoThuChiApp(store: store));
     await tester.pump();
     await tester.pump();
-    expect(find.text('Đã tự ghi 1 khoản chi từ Apple Pay'), findsOneWidget);
+    expect(find.text('Đã ghi 1 giao dịch từ Phím tắt'), findsOneWidget);
     expect(store.txs.single.amount, 45000);
     await tester.pumpAndSettle(const Duration(seconds: 5));
+  });
+
+  testWidgets('Menu "Xem thống kê chi tiêu" mở đúng tab Thống kê', (tester) async {
+    SharedPreferences.setMockInitialValues({'lang': 'vi', 'openTab': 2});
+    final store = await AppStore.load();
+    await tester.pumpWidget(SoThuChiApp(store: store));
+    await tester.pumpAndSettle();
+    expect(find.text('Đã chi'), findsOneWidget); // thẻ tổng của màn Thống kê
+    expect((await SharedPreferences.getInstance()).getInt('openTab'), isNull); // chỉ mở một lần
   });
 }

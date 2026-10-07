@@ -254,7 +254,15 @@ class AppStore extends ChangeNotifier {
     return catsOf(TxType.expense).first.id;
   }
 
-  /// Nhập các khoản chi mà hành động "Ghi khoản chi" của Phím tắt đã cất vào hàng chờ.
+  /// Tab mà menu Phím tắt yêu cầu mở ("Xem thống kê chi tiêu" -> 2); đọc một lần rồi xóa.
+  Future<int?> takeOpenTab() async {
+    await _prefs.reload(); // được ghi từ phía iOS, ngoài Flutter
+    final tab = _prefs.getInt('openTab');
+    if (tab != null) await _prefs.remove('openTab');
+    return tab;
+  }
+
+  /// Nhập các giao dịch mà Phím tắt (menu "Sổ thu chi" / "Ghi khoản chi") đã cất vào hàng chờ.
   /// Trả về số khoản đã ghi.
   Future<int> importPending() async {
     await _prefs.reload(); // hàng chờ được ghi từ phía iOS, ngoài Flutter
@@ -273,13 +281,15 @@ class AppStore extends ChangeNotifier {
       if (e is! Map) continue;
       final amount = parseAmount('${e['amount'] ?? ''}');
       if (amount <= 0) continue;
-      final merchant = '${e['merchant'] ?? ''}'.trim();
+      // Menu "Sổ thu chi" gửi sẵn danh mục; "Ghi khoản chi" (Apple Pay) chỉ có nơi thanh toán.
+      final note = '${e['note'] ?? e['merchant'] ?? ''}'.trim();
+      final chosen = cat('${e['categoryId'] ?? ''}');
       txs.add(Tx(
         id: 'ap${base}_$n',
         amount: amount,
-        type: TxType.expense,
-        categoryId: guessCategory(merchant),
-        note: merchant,
+        type: chosen?.type ?? TxType.expense,
+        categoryId: chosen?.id ?? guessCategory(note),
+        note: note,
         date: DateTime.tryParse('${e['date']}')?.toLocal() ?? DateTime.now(),
       ));
       n++;

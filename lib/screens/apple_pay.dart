@@ -6,7 +6,7 @@ import '../store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 
-/// Hướng dẫn cài tự động hóa "Giao dịch" trong Phím tắt + chọn danh mục mặc định.
+/// Hướng dẫn dùng Phím tắt: menu "Sổ thu chi" và tự ghi khi thanh toán Apple Pay; chọn danh mục mặc định.
 class ApplePayScreen extends StatelessWidget {
   const ApplePayScreen({super.key});
 
@@ -40,26 +40,57 @@ class ApplePayScreen extends StatelessWidget {
                 const SizedBox(width: 46),
               ],
             ),
-            const SizedBox(height: 14),
+            // Menu "Sổ thu chi"
+            section(s.menuTitle),
             AppCard(
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(color: c.text, borderRadius: BorderRadius.circular(14)),
-                    child: Icon(Icons.contactless_outlined, color: c.card),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _badge(c, Icons.bolt, c.primary),
+                      const SizedBox(width: 14),
+                      Expanded(child: Text(s.menuIntro, style: const TextStyle(height: 1.45))),
+                    ],
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(child: Text(s.apIntro, style: const TextStyle(height: 1.45))),
+                  const SizedBox(height: 14),
+                  for (final (i, way) in s.menuWays.indexed) ...[
+                    if (i > 0) const SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Icon(const [Icons.mic_none, Icons.apps, Icons.radio_button_checked, Icons.tune][i],
+                              size: 18, color: c.muted),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(way, style: const TextStyle(height: 1.4))),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
-            section(s.apSetupTitle),
+
+            // Tự ghi khi thanh toán (tự động hóa "Giao dịch" + hành động "Ghi khoản chi")
+            section(s.autoLogTitle),
             AppCard(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _badge(c, Icons.contactless_outlined, c.text),
+                      const SizedBox(width: 14),
+                      Expanded(child: Text(s.apIntro, style: const TextStyle(height: 1.45))),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(s.apSetupTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 12),
                   for (final (i, step) in s.apSteps.indexed) ...[
                     if (i > 0) const SizedBox(height: 14),
                     Row(
@@ -125,6 +156,13 @@ class ApplePayScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _badge(AppColors c, IconData icon, Color bg) => Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
+        child: Icon(icon, color: c.card),
+      );
 
   Widget _chip(AppColors c, S s, Category cat, bool sel, VoidCallback onTap) {
     final col = Color(cat.color);

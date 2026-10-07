@@ -97,16 +97,36 @@ class S {
   String get saveIncome => _('Lưu khoản thu', 'Save income');
 
   // ---- Tự ghi từ Apple Pay (Phím tắt) ----
-  String get applePayTitle => _('Tự ghi từ Apple Pay', 'Auto-log Apple Pay');
-  String get applePaySub => _('Qua tự động hóa của app Phím tắt', 'Via a Shortcuts automation');
+  String get applePayTitle => _('Phím tắt & Apple Pay', 'Shortcuts & Apple Pay');
+  String get applePaySub => _('Menu ghi nhanh, tự ghi khi thanh toán', 'Quick menu, auto-log payments');
   String autoRecorded(int n) =>
-      _('Đã tự ghi $n khoản chi từ Apple Pay', 'Logged $n Apple Pay payment${n == 1 ? '' : 's'}');
+      _('Đã ghi $n giao dịch từ Phím tắt', 'Added $n transaction${n == 1 ? '' : 's'} from Shortcuts');
+  String get menuTitle => _('MENU "SỔ THU CHI"', '"SỔ THU CHI" MENU');
+  String get menuIntro => _(
+      'Trong app Phím tắt, mục Saving App có sẵn "Sổ thu chi": chọn 💸 Ghi khoản chi, 💰 Ghi khoản thu '
+          'hoặc 📈 Xem thống kê chi tiêu (mở thẳng tab Thống kê). Ghi chi/thu không cần mở app.',
+      'In the Shortcuts app, under Saving App you\'ll find "Sổ thu chi": pick 💸 log expense, 💰 log income '
+          'or 📈 view stats (opens the Stats tab). Logging doesn\'t open the app.');
+  List<String> get menuWays => en
+      ? const [
+          'Siri: say "Menu Saving App".',
+          'Home Screen: in Shortcuts, tap and hold "Sổ thu chi" under Saving App → Add to Home Screen.',
+          'Action Button (iPhone 15 Pro and later): Settings → Action Button → Shortcut → "Sổ thu chi".',
+          'Control Center / Lock Screen (iOS 18): add a control → Shortcuts → "Sổ thu chi".',
+        ]
+      : const [
+          'Siri: nói "Menu Saving App".',
+          'Màn hình chính: trong app Phím tắt, chạm giữ "Sổ thu chi" ở mục Saving App → Thêm vào Màn hình chính.',
+          'Nút Tác vụ (iPhone 15 Pro trở lên): Cài đặt → Nút Tác vụ → Phím tắt → "Sổ thu chi".',
+          'Trung tâm điều khiển / Màn hình khóa (iOS 18): thêm điều khiển → Phím tắt → "Sổ thu chi".',
+        ];
+  String get autoLogTitle => _('TỰ GHI KHI THANH TOÁN APPLE PAY', 'AUTO-LOG APPLE PAY PAYMENTS');
   String get apIntro => _(
       'Mỗi lần bạn thanh toán bằng thẻ trong Ví, iPhone tự chạy một phím tắt gửi số tiền và nơi thanh toán sang app. '
           'Khoản chi được ghi vào sổ khi bạn mở app.',
       'Each time you pay with a card in Wallet, your iPhone runs a shortcut that sends the amount and merchant to the app. '
           'The expense is added when you open the app.');
-  String get apSetupTitle => _('CÀI ĐẶT MỘT LẦN (iOS 17 TRỞ LÊN)', 'ONE-TIME SETUP (iOS 17+)');
+  String get apSetupTitle => _('Cài một lần (iOS 17 trở lên):', 'One-time setup (iOS 17+):');
   List<String> get apSteps => en
       ? const [
           'Open the Shortcuts app → Automation tab → tap +.',

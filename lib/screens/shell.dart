@@ -32,14 +32,21 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _importApplePay());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _importFromShortcuts());
   }
 
-  /// Nhập các khoản chi mà Phím tắt (tự động hóa Apple Pay) đã gửi sang.
-  Future<void> _importApplePay() async {
-    final n = await StoreScope.read(context).importPending();
+  /// Nhận dữ liệu từ Phím tắt (menu "Sổ thu chi" / tự ghi Apple Pay):
+  /// giao dịch trong hàng chờ và yêu cầu mở tab Thống kê.
+  Future<void> _importFromShortcuts() async {
+    final store = StoreScope.read(context);
+    final n = await store.importPending();
     if (n > 0 && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.current.autoRecorded(n))));
+    }
+    final tab = await store.takeOpenTab();
+    if (tab != null && tab >= 0 && tab < 4 && mounted) {
+      Navigator.of(context).popUntil((r) => r.isFirst); // đang ở màn con thì quay về
+      _go(tab);
     }
   }
 
@@ -54,7 +61,7 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       StoreScope.read(context).runRecurring();
-      _importApplePay();
+      _importFromShortcuts();
     }
   }
 
