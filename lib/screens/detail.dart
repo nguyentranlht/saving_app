@@ -1,0 +1,180 @@
+import 'package:flutter/material.dart';
+
+import '../format.dart';
+import '../models.dart';
+import '../store.dart';
+import '../theme.dart';
+import '../widgets/common.dart';
+import 'add_transaction.dart';
+
+class DetailScreen extends StatelessWidget {
+  const DetailScreen({super.key, required this.txId});
+  final String txId;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    final store = StoreScope.of(context);
+    final tx = store.tx(txId);
+    if (tx == null) {
+      // Đã bị xóa -> tự thoát.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted && Navigator.of(context).canPop()) Navigator.of(context).pop();
+      });
+      return const Scaffold();
+    }
+    final cat = store.cat(tx.categoryId);
+    final color = tx.type == TxType.expense ? c.expense : c.income;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  CircleBtn(icon: Icons.chevron_left, onTap: () => Navigator.of(context).pop()),
+                  const Expanded(
+                    child: Center(
+                      child: Text('Chi tiết giao dịch',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                    ),
+                  ),
+                  const SizedBox(width: 46),
+                ],
+              ),
+              const SizedBox(height: 16),
+              AppCard(
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                radius: 30,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    children: [
+                      CatIcon(category: cat, size: 76),
+                      const SizedBox(height: 12),
+                      Text(cat?.name ?? 'Đã xóa',
+                          style: TextStyle(color: c.muted, fontSize: 18, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 8),
+                      Text(vnd(tx.signed),
+                          style: TextStyle(color: color, fontSize: 44, fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                        decoration: BoxDecoration(color: color.op(0.14), borderRadius: BorderRadius.circular(20)),
+                        child: Text(tx.type == TxType.expense ? 'Khoản chi' : 'Khoản thu',
+                            style: TextStyle(color: color, fontWeight: FontWeight.w800)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              AppCard(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 6),
+                radius: 28,
+                child: Column(
+                  children: [
+                    _row(c, 'Danh mục', cat?.name ?? '—', bold: true),
+                    Divider(height: 1, color: c.divider),
+                    _row(c, 'Thời gian', '${hm(tx.date)} · ${tx.date.day} thg ${tx.date.month}, ${tx.date.year}',
+                        bold: true),
+                    Divider(height: 1, color: c.divider),
+                    _row(c, 'Ghi chú', tx.note.isEmpty ? 'Không có ghi chú' : tx.note),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  Expanded(
+                    child: _btn(
+                      icon: Icons.edit_outlined,
+                      label: 'Sửa',
+                      bg: c.card,
+                      fg: c.text,
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        fullscreenDialog: true,
+                        builder: (_) => AddTransactionScreen(editing: tx),
+                      )),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _btn(
+                      icon: Icons.delete_outline,
+                      label: 'Xóa',
+                      bg: c.expense.op(0.15),
+                      fg: c.expense,
+                      onTap: () => _confirmDelete(context, store, tx),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, AppStore store, Tx tx) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xóa giao dịch?'),
+        content: const Text('Thao tác này không thể hoàn tác.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Xóa')),
+        ],
+      ),
+    );
+    if (ok == true) {
+      store.deleteTx(tx.id);
+      if (context.mounted) Navigator.of(context).pop();
+    }
+  }
+
+  Widget _row(AppColors c, String k, String v, {bool bold = false}) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        child: Row(
+          children: [
+            Text(k, style: TextStyle(color: c.muted, fontSize: 16)),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(v,
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: bold ? FontWeight.w800 : FontWeight.w400,
+                      color: bold ? c.text : c.muted)),
+            ),
+          ],
+        ),
+      );
+
+  Widget _btn({
+    required IconData icon,
+    required String label,
+    required Color bg,
+    required Color fg,
+    required VoidCallback onTap,
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 60,
+          decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(30)),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: fg),
+              const SizedBox(width: 8),
+              Text(label, style: TextStyle(color: fg, fontSize: 18, fontWeight: FontWeight.w800)),
+            ],
+          ),
+        ),
+      );
+}
