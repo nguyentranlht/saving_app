@@ -59,37 +59,58 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             AppCard(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               radius: 28,
-              child: Column(
+              // Kéo biểu tượng ≡ để sắp xếp; thứ tự này dùng ở mọi nơi (kể cả Phím tắt).
+              child: ReorderableListView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                proxyDecorator: (child, _, __) => Material(
+                  color: c.card,
+                  elevation: 6,
+                  borderRadius: BorderRadius.circular(18),
+                  child: child,
+                ),
+                onReorderItem: (from, to) => store.moveCategory(_type, from, to),
                 children: [
-                  for (var i = 0; i < cats.length; i++) ...[
-                    if (i > 0) Divider(height: 1, color: c.divider),
-                    InkWell(
-                      onTap: () => _edit(context, store, cats[i]),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Row(
-                          children: [
-                            CatIcon(category: cats[i], size: 52),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(s.catName(cats[i]),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-                                  Text(s.txCount(store.countIn(cats[i].id)),
-                                      style: TextStyle(color: c.muted, fontSize: 14)),
-                                ],
+                  for (var i = 0; i < cats.length; i++)
+                    Container(
+                      key: ValueKey(cats[i].id),
+                      decoration: BoxDecoration(
+                        border: i == 0 ? null : Border(top: BorderSide(color: c.divider)),
+                      ),
+                      child: InkWell(
+                        onTap: () => _edit(context, store, cats[i]),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            children: [
+                              CatIcon(category: cats[i], size: 52),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(s.catName(cats[i]),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                                    Text(s.txCount(store.countIn(cats[i].id)),
+                                        style: TextStyle(color: c.muted, fontSize: 14)),
+                                  ],
+                                ),
                               ),
-                            ),
-                            Icon(Icons.chevron_right, color: c.muted),
-                          ],
+                              ReorderableDragStartListener(
+                                index: i,
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
+                                  child: Icon(Icons.drag_handle, color: c.muted),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ],
                 ],
               ),
             ),

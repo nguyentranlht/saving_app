@@ -275,8 +275,8 @@ class S {
 
   // ---- Danh mục ----
   String get manageCategories => _('Quản lý danh mục', 'Manage categories');
-  String get categoriesHint =>
-      _('Chạm vào một danh mục để đổi tên, biểu tượng hoặc màu.', 'Tap a category to change its name, icon or color.');
+  String get categoriesHint => _('Chạm để đổi tên, biểu tượng, màu. Giữ biểu tượng ≡ rồi kéo để sắp xếp.',
+      'Tap to change name, icon or color. Hold ≡ and drag to reorder.');
   String get addCategory => _('Thêm danh mục mới', 'Add new category');
   String get newCategory => _('Danh mục mới', 'New category');
   String get editCategory => _('Sửa danh mục', 'Edit category');

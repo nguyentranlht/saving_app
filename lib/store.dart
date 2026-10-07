@@ -323,6 +323,17 @@ class AppStore extends ChangeNotifier {
   }
 
   // ---- Danh mục ----
+  /// Đưa danh mục ở vị trí [from] tới vị trí [to] trong số các danh mục loại [type]
+  /// (danh mục loại kia giữ nguyên chỗ).
+  void moveCategory(TxType type, int from, int to) {
+    final sub = catsOf(type);
+    if (from == to || from < 0 || from >= sub.length || to < 0 || to >= sub.length) return;
+    sub.insert(to, sub.removeAt(from));
+    var k = 0;
+    categories = [for (final c in categories) c.type == type ? sub[k++] : c];
+    _commit();
+  }
+
   void upsertCategory(Category c) {
     final i = categories.indexWhere((x) => x.id == c.id);
     if (i >= 0) {
