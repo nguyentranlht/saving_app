@@ -16,7 +16,7 @@ class Backup {
     this.reminderMinute,
   });
 
-  static const format = 'so_thu_chi_backup';
+  static const format = 'so_thu_chi_backup'; // giữ tên cũ để file sao lưu cũ vẫn khôi phục được
   static const version = 3; // 2: thêm giao dịch định kỳ, 3: thêm ngân sách
 
   final List<Category> categories;

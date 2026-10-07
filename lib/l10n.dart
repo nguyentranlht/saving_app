@@ -25,7 +25,7 @@ class S {
   String _(String vi, String en) => this.en ? en : vi;
 
   // ---- Chung ----
-  String get appName => _('Sổ thu chi', 'Money Book');
+  String get appName => 'Ting Ting';
   String get expense => _('Khoản chi', 'Expense');
   String get income => _('Khoản thu', 'Income');
   String get expenseShort => _('Chi', 'Expense');
@@ -108,8 +108,8 @@ class S {
   // Phần 1: menu "Sổ thu chi"
   String get menuTitle => _('GHI NHANH BẰNG MENU', 'QUICK MENU');
   String get menuIntro => _(
-      'Ghi chi tiêu chỉ với vài chạm, không cần mở app. Menu "Sổ thu chi" có sẵn trong app Phím tắt, ở mục Saving App.',
-      'Log spending in a few taps without opening the app. The "Sổ thu chi" menu is ready in the Shortcuts app, under Saving App.');
+      'Ghi chi tiêu chỉ với vài chạm, không cần mở app. Menu "Sổ thu chi" có sẵn trong app Phím tắt, ở mục $appName.',
+      'Log spending in a few taps without opening the app. The "Sổ thu chi" menu is ready in the Shortcuts app, under $appName.');
   List<(String, String, String)> get menuOptions => en
       ? const [
           ('💸', 'Ghi khoản chi', 'Enter the amount (in thousands: 45 = 45,000đ, 45.32 = 45,320đ), then pick a spending category.'),
@@ -124,12 +124,12 @@ class S {
   String get menuSetupTitle => _('Đưa menu ra màn hình chính:', 'Add the menu to your Home Screen:');
   List<String> get menuSteps => en
       ? const [
-          'Open the Shortcuts app → Shortcuts tab, scroll down to Saving App.',
+          'Open the Shortcuts app → Shortcuts tab, scroll down to Ting Ting.',
           'Tap and hold "Sổ thu chi" → Add to Home Screen → Add.',
           'Tap the new icon on your Home Screen whenever you spend.',
         ]
       : const [
-          'Mở app Phím tắt → tab Phím tắt, kéo xuống mục Saving App.',
+          'Mở app Phím tắt → tab Phím tắt, kéo xuống mục Ting Ting.',
           'Chạm giữ ô "Sổ thu chi" → Thêm vào Màn hình chính → Thêm.',
           'Mỗi lần chi tiêu, chạm vào biểu tượng vừa thêm trên màn hình chính.',
         ];
@@ -388,8 +388,8 @@ class S {
   // ---- Thông báo / xuất file ----
   String get reminderBody => _('Hôm nay bạn đã ghi chép thu chi chưa?', 'Have you logged your spending today?');
   String get reminderChannelDesc => _('Nhắc ghi chép thu chi mỗi ngày', 'Daily reminder to log your spending');
-  String get backupSubject => _('Sao lưu Sổ thu chi', 'Money Book backup');
-  String get exportSubject => _('Dữ liệu Sổ thu chi', 'Money Book data');
+  String get backupSubject => _('Sao lưu $appName', '$appName backup');
+  String get exportSubject => _('Dữ liệu $appName', '$appName data');
   String get csvHeader =>
       _('Ngày giờ,Loại,Danh mục,Số tiền (đ),Ghi chú', 'Date time,Type,Category,Amount (VND),Note');
 }

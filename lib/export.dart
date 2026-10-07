@@ -17,7 +17,7 @@ import 'store.dart';
 Future<void> shareCsv(AppStore store, {Rect? origin}) async {
   final dir = await getTemporaryDirectory();
   final n = DateTime.now();
-  final name = 'so_thu_chi_${n.year}${two(n.month)}${two(n.day)}.csv';
+  final name = 'ting_ting_${n.year}${two(n.month)}${two(n.day)}.csv';
   final file = File('${dir.path}/$name');
   await file.writeAsString('﻿${store.exportCsv()}', flush: true);
   await Share.shareXFiles(
@@ -31,7 +31,7 @@ Future<void> shareCsv(AppStore store, {Rect? origin}) async {
 Future<bool> shareBackup(AppStore store, {Rect? origin}) async {
   final dir = await getTemporaryDirectory();
   final n = DateTime.now();
-  final name = 'so_thu_chi_backup_${n.year}${two(n.month)}${two(n.day)}_${two(n.hour)}${two(n.minute)}.json';
+  final name = 'ting_ting_backup_${n.year}${two(n.month)}${two(n.day)}_${two(n.hour)}${two(n.minute)}.json';
   final file = File('${dir.path}/$name');
   await file.writeAsString(store.toBackup().encode(), flush: true);
   final r = await Share.shareXFiles(
