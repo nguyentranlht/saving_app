@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'backup.dart';
 import 'format.dart';
 import 'l10n.dart';
 import 'models.dart';
@@ -20,6 +21,7 @@ class AppStore extends ChangeNotifier {
   bool reminder = false;
   int reminderHour = 21;
   int reminderMinute = 0;
+  DateTime? lastBackup;
 
   static Future<AppStore> load() async {
     final s = AppStore._(await SharedPreferences.getInstance());
@@ -46,6 +48,8 @@ class AppStore extends ChangeNotifier {
     s.reminder = s._prefs.getBool('reminder') ?? false;
     s.reminderHour = s._prefs.getInt('reminderHour') ?? 21;
     s.reminderMinute = s._prefs.getInt('reminderMinute') ?? 0;
+    final lb = s._prefs.getString('lastBackup');
+    s.lastBackup = lb == null ? null : DateTime.tryParse(lb);
     s._sort();
     return s;
   }
@@ -76,6 +80,7 @@ class AppStore extends ChangeNotifier {
     await _prefs.setBool('reminder', reminder);
     await _prefs.setInt('reminderHour', reminderHour);
     await _prefs.setInt('reminderMinute', reminderMinute);
+    if (lastBackup != null) await _prefs.setString('lastBackup', lastBackup!.toIso8601String());
   }
 
   void _commit() {
@@ -205,6 +210,40 @@ class AppStore extends ChangeNotifier {
     if (reminder) {
       await Reminder.schedule(reminderHour, reminderMinute);
     }
+  }
+
+  // ---- Sao lưu / khôi phục ----
+  Backup toBackup() => Backup(
+        categories: categories,
+        txs: txs,
+        exportedAt: DateTime.now(),
+        theme: themeMode == ThemeMode.dark ? 'dark' : 'light',
+        lang: lang.name,
+        reminderHour: reminderHour,
+        reminderMinute: reminderMinute,
+      );
+
+  void markBackedUp() {
+    lastBackup = DateTime.now();
+    _commit();
+  }
+
+  /// Thay toàn bộ dữ liệu bằng bản sao lưu. Giữ nguyên trạng thái bật/tắt nhắc
+  /// (vì cần quyền thông báo trên máy này), chỉ lấy giờ nhắc.
+  Future<void> restore(Backup b) async {
+    categories = [...b.categories];
+    txs = [...b.txs];
+    if (b.theme != null) themeMode = b.theme == 'dark' ? ThemeMode.dark : ThemeMode.light;
+    if (b.lang == 'vi' || b.lang == 'en') {
+      lang = AppLang.values.byName(b.lang!);
+      S.use(lang);
+    }
+    if (b.reminderHour != null && b.reminderMinute != null) {
+      reminderHour = b.reminderHour!;
+      reminderMinute = b.reminderMinute!;
+    }
+    _commit();
+    await syncReminder();
   }
 
   Future<void> clearAll() async {

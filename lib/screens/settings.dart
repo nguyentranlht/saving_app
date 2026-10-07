@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../backup.dart';
 import '../export.dart';
+import '../format.dart';
 import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
@@ -81,8 +83,22 @@ class SettingsScreen extends StatelessWidget {
             children: [
               // Builder để lấy vị trí của chính dòng này làm điểm neo bảng chia sẻ.
               Builder(
+                builder: (rowCtx) => _row(c, Icons.cloud_upload_outlined, const Color(0xFF16A06A), s.backup,
+                    sub: store.lastBackup == null ? s.neverBackedUp : s.lastBackupAt(_when(store.lastBackup!)),
+                    onTap: () => _backup(rowCtx, store),
+                    trailing: Icon(Icons.chevron_right, color: c.muted)),
+              ),
+              Divider(height: 1, color: c.divider),
+              _row(c, Icons.settings_backup_restore, const Color(0xFF3B82F6), s.restore,
+                  sub: s.restoreSub,
+                  onTap: () => _restore(context, store),
+                  trailing: Icon(Icons.chevron_right, color: c.muted)),
+              Divider(height: 1, color: c.divider),
+              Builder(
                 builder: (rowCtx) => _row(c, Icons.download_outlined, c.muted, s.exportCsv,
-                    onTap: () => _export(rowCtx, store), trailing: Icon(Icons.chevron_right, color: c.muted)),
+                    sub: s.csvSub,
+                    onTap: () => _export(rowCtx, store),
+                    trailing: Icon(Icons.chevron_right, color: c.muted)),
               ),
               Divider(height: 1, color: c.divider),
               _row(c, Icons.delete_outline, c.expense, s.clearAll,
@@ -193,6 +209,68 @@ class SettingsScreen extends StatelessWidget {
     if (t != null) await store.setReminderTime(t.hour, t.minute);
   }
 
+  /// iOS 26 và iPad bắt buộc có vị trí neo cho bảng chia sẻ, thiếu sẽ báo lỗi.
+  Rect? _originOf(BuildContext context) {
+    final box = context.findRenderObject() as RenderBox?;
+    return box == null ? null : box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  String _when(DateTime d) => '${dm(d)}, ${d.year} · ${hm(d)}';
+
+  void _snack(BuildContext context, String text, {SnackBarAction? action}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(text),
+      action: action,
+      persist: false, // có nút Hoàn tác vẫn tự ẩn
+      duration: Duration(seconds: action == null ? 4 : 8),
+    ));
+  }
+
+  Future<void> _backup(BuildContext context, AppStore store) async {
+    try {
+      final saved = await shareBackup(store, origin: _originOf(context));
+      if (!saved) return;
+      store.markBackedUp();
+      if (context.mounted) _snack(context, S.current.backupDone);
+    } catch (e) {
+      debugPrint('Sao lưu lỗi: $e');
+      if (context.mounted) _snack(context, S.current.backupFailed);
+    }
+  }
+
+  Future<void> _restore(BuildContext context, AppStore store) async {
+    final s = S.current;
+    final Backup? b;
+    try {
+      b = await pickBackup();
+    } catch (e) {
+      debugPrint('Đọc bản sao lưu lỗi: $e');
+      if (context.mounted) _snack(context, s.invalidBackup);
+      return;
+    }
+    if (b == null || !context.mounted) return;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(s.restoreQ),
+        content: Text(s.restoreBody(_when(b!.exportedAt), b.txs.length, b.categories.length, store.txs.length)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(s.cancel)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(s.restoreAction)),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    final before = store.toBackup(); // giữ lại để hoàn tác
+    await store.restore(b);
+    if (context.mounted) {
+      _snack(context, S.current.restored(b.txs.length),
+          action: SnackBarAction(label: S.current.undo, onPressed: () => store.restore(before)));
+    }
+  }
+
   Future<void> _export(BuildContext context, AppStore store) async {
     if (store.txs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -200,11 +278,8 @@ class SettingsScreen extends StatelessWidget {
       );
       return;
     }
-    // iOS 26 và iPad bắt buộc có vị trí neo cho bảng chia sẻ, thiếu sẽ báo lỗi.
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box == null ? null : box.localToGlobal(Offset.zero) & box.size;
     try {
-      await shareCsv(store, origin: origin);
+      await shareCsv(store, origin: _originOf(context));
     } catch (e) {
       debugPrint('Xuất CSV lỗi: $e');
       if (context.mounted) {

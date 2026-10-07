@@ -203,6 +203,24 @@ class S {
       _('Mỗi ngày lúc ${two(h)}:${two(m)} · chạm để đổi giờ', 'Every day at ${two(h)}:${two(m)} · tap to change');
   String get off => _('Đang tắt', 'Off');
   String get data => _('DỮ LIỆU', 'DATA');
+  String get backup => _('Sao lưu dữ liệu', 'Back up data');
+  String lastBackupAt(String when) => _('Lần gần nhất: $when', 'Last backup: $when');
+  String get neverBackedUp => _('Chưa sao lưu lần nào', 'Never backed up');
+  String get backupDone => _('Đã sao lưu. Giữ file này ở nơi an toàn (Tệp, iCloud Drive…)',
+      'Backed up. Keep this file somewhere safe (Files, iCloud Drive…)');
+  String get backupFailed => _('Không sao lưu được dữ liệu', 'Couldn\'t back up data');
+  String get restore => _('Khôi phục từ bản sao lưu', 'Restore from backup');
+  String get restoreSub => _('Chọn file .json đã sao lưu', 'Pick a .json backup file');
+  String get invalidBackup =>
+      _('File này không phải bản sao lưu hợp lệ của app', 'This file isn\'t a valid backup from this app');
+  String get restoreQ => _('Khôi phục dữ liệu?', 'Restore data?');
+  String restoreBody(String when, int txs, int cats, int currentTxs) => _(
+      'Bản sao lưu lúc $when gồm $txs giao dịch và $cats danh mục.\n\nDữ liệu hiện tại ($currentTxs giao dịch) sẽ bị thay thế.',
+      'Backup from $when contains $txs transactions and $cats categories.\n\nYour current data ($currentTxs transactions) will be replaced.');
+  String get restoreAction => _('Khôi phục', 'Restore');
+  String restored(int n) => _('Đã khôi phục $n giao dịch', 'Restored $n transactions');
+  String get undo => _('Hoàn tác', 'Undo');
+  String get csvSub => _('Để mở bằng Excel, Google Sheets', 'To open in Excel, Google Sheets');
   String get exportCsv => _('Xuất dữ liệu (CSV)', 'Export data (CSV)');
   String get clearAll => _('Xóa toàn bộ dữ liệu', 'Delete all data');
   String get cannotUndoShort => _('Không thể hoàn tác', 'Cannot be undone');
@@ -220,6 +238,7 @@ class S {
   // ---- Thông báo / xuất file ----
   String get reminderBody => _('Hôm nay bạn đã ghi chép thu chi chưa?', 'Have you logged your spending today?');
   String get reminderChannelDesc => _('Nhắc ghi chép thu chi mỗi ngày', 'Daily reminder to log your spending');
+  String get backupSubject => _('Sao lưu Sổ thu chi', 'Money Book backup');
   String get exportSubject => _('Dữ liệu Sổ thu chi', 'Money Book data');
   String get csvHeader =>
       _('Ngày giờ,Loại,Danh mục,Số tiền (đ),Ghi chú', 'Date time,Type,Category,Amount (VND),Note');
