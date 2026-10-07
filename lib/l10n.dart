@@ -96,6 +96,50 @@ class S {
   String get saveExpense => _('Lưu khoản chi', 'Save expense');
   String get saveIncome => _('Lưu khoản thu', 'Save income');
 
+  // ---- Tự ghi từ Apple Pay (Phím tắt) ----
+  String get applePayTitle => _('Tự ghi từ Apple Pay', 'Auto-log Apple Pay');
+  String get applePaySub => _('Qua tự động hóa của app Phím tắt', 'Via a Shortcuts automation');
+  String autoRecorded(int n) =>
+      _('Đã tự ghi $n khoản chi từ Apple Pay', 'Logged $n Apple Pay payment${n == 1 ? '' : 's'}');
+  String get apIntro => _(
+      'Mỗi lần bạn thanh toán bằng thẻ trong Ví, iPhone tự chạy một phím tắt gửi số tiền và nơi thanh toán sang app. '
+          'Khoản chi được ghi vào sổ khi bạn mở app.',
+      'Each time you pay with a card in Wallet, your iPhone runs a shortcut that sends the amount and merchant to the app. '
+          'The expense is added when you open the app.');
+  String get apSetupTitle => _('CÀI ĐẶT MỘT LẦN (iOS 17 TRỞ LÊN)', 'ONE-TIME SETUP (iOS 17+)');
+  List<String> get apSteps => en
+      ? const [
+          'Open the Shortcuts app → Automation tab → tap +.',
+          'Choose "Transaction", pick the cards to track (or all), choose "Run Immediately", then tap Next.',
+          'Tap "New Blank Automation" / "Add Action", search for "Ghi khoản chi" and pick it.',
+          'Tap "Amount" → choose "Shortcut Input" → "Amount". Do the same for "Merchant" → "Merchant".',
+          'Tap Done. From now on every Apple Pay payment is logged automatically.',
+        ]
+      : const [
+          'Mở app Phím tắt → tab Tự động hóa → bấm dấu +.',
+          'Chọn "Giao dịch", chọn thẻ muốn theo dõi (hoặc tất cả), chọn "Chạy ngay lập tức" rồi bấm Tiếp.',
+          'Chọn "Tự động hóa trống mới" / "Thêm tác vụ", tìm "Ghi khoản chi" và chọn.',
+          'Chạm ô "Số tiền" → chọn "Đầu vào phím tắt" (Shortcut Input) → "Số tiền" (Amount). '
+              'Làm tương tự với ô "Nơi thanh toán" → "Người bán" (Merchant).',
+          'Bấm Xong. Từ giờ mỗi lần thanh toán Apple Pay sẽ được ghi tự động.',
+        ];
+  String get apCategoryTitle => _('DANH MỤC MẶC ĐỊNH', 'DEFAULT CATEGORY');
+  String get apCategoryHint => _(
+      'Dùng khi chi ở nơi mới. Nơi đã từng chi sẽ tự lấy danh mục của lần gần nhất.',
+      'Used for new merchants. Known merchants reuse the category from last time.');
+  String get apNotesTitle => _('LƯU Ý', 'GOOD TO KNOW');
+  List<String> get apNotes => en
+      ? const [
+          'Only payments made with a card in Wallet (tap to pay / Apple Pay) are logged. Bank transfers, physical cards and other e-wallets are not.',
+          'If a payment is refunded or wrong, edit or delete it in History.',
+          'Apple doesn\'t let apps read Wallet transactions directly, so this setup through Shortcuts is required.',
+        ]
+      : const [
+          'Chỉ ghi được thanh toán bằng thẻ trong Ví (chạm điện thoại / Apple Pay). Chuyển khoản, quẹt thẻ vật lý hay ví điện tử khác không được ghi.',
+          'Nếu khoản thanh toán bị hoàn tiền hoặc sai, bạn sửa hoặc xóa trong Lịch sử.',
+          'Apple không cho app đọc trực tiếp giao dịch trong Ví, nên cần cài qua Phím tắt như trên.',
+        ];
+
   // ---- Ngân sách ----
   String get budgetTitle => _('Ngân sách', 'Budgets');
   String get budgetThisMonth => _('Ngân sách tháng', 'Monthly budget');

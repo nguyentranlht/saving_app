@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../backup.dart';
@@ -7,6 +8,7 @@ import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'apple_pay.dart';
 import 'budget.dart';
 import 'categories.dart';
 import 'recurring.dart';
@@ -74,6 +76,14 @@ class SettingsScreen extends StatelessWidget {
                     Icon(Icons.chevron_right, color: c.muted),
                   ])),
               Divider(height: 1, color: c.divider),
+              // Chỉ iPhone mới có Apple Pay + Phím tắt.
+              if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+                _row(c, Icons.contactless_outlined, c.text, s.applePayTitle,
+                    sub: s.applePaySub,
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ApplePayScreen())),
+                    trailing: Icon(Icons.chevron_right, color: c.muted)),
+                Divider(height: 1, color: c.divider),
+              ],
               _row(c, Icons.repeat, const Color(0xFF14B8A6), s.recurringTitle,
                   onTap: () => Navigator.of(context)
                       .push(MaterialPageRoute(builder: (_) => const RecurringScreen())),

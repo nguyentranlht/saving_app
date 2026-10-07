@@ -6,6 +6,7 @@ import 'package:so_thu_chi/l10n.dart';
 import 'package:so_thu_chi/main.dart';
 import 'package:so_thu_chi/models.dart';
 import 'package:so_thu_chi/screens/add_transaction.dart';
+import 'package:so_thu_chi/screens/apple_pay.dart';
 import 'package:so_thu_chi/screens/budget.dart';
 import 'package:so_thu_chi/screens/categories.dart';
 import 'package:so_thu_chi/screens/detail.dart';
@@ -61,6 +62,7 @@ void main() {
             const CategoriesScreen(),
             const RecurringScreen(),
             const BudgetScreen(),
+            const ApplePayScreen(),
             AddTransactionScreen(editingRule: store.recurring('rec')),
           ]) {
             nav.push(MaterialPageRoute(builder: (_) => page));

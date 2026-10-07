@@ -29,6 +29,20 @@ String compact(int n) {
   return '$a';
 }
 
+/// Đọc số tiền do Phím tắt gửi sang: "₫125.000", "125,000 ₫", "125000", "$12.50"...
+/// Dấu . và , được coi là ngăn cách hàng nghìn, trừ khi chỉ có 1–2 chữ số phía sau
+/// (phần thập phân, sẽ được làm tròn). Trả về 0 nếu không đọc được.
+int parseAmount(String raw) {
+  final t = raw.replaceAll(RegExp(r'[^0-9.,]'), '');
+  final dec = RegExp(r'^(.*)[.,](\d{1,2})$').firstMatch(t);
+  if (dec != null) {
+    final whole = int.tryParse(dec.group(1)!.replaceAll(RegExp(r'[.,]'), '')) ?? 0;
+    final frac = int.parse(dec.group(2)!.padRight(2, '0'));
+    return whole + (frac >= 50 ? 1 : 0);
+  }
+  return int.tryParse(t.replaceAll(RegExp(r'[.,]'), '')) ?? 0;
+}
+
 String two(int n) => n.toString().padLeft(2, '0');
 String hm(DateTime d) => '${two(d.hour)}:${two(d.minute)}';
 String dm(DateTime d) => S.current.dayMonth(d);

@@ -28,6 +28,7 @@ class AppStore extends ChangeNotifier {
   int reminderHour = 21;
   int reminderMinute = 0;
   DateTime? lastBackup;
+  String autoCategoryId = 'other_e'; // danh mục cho khoản tự ghi ở nơi chưa gặp
 
   static Future<AppStore> load() async {
     final s = AppStore._(await SharedPreferences.getInstance());
@@ -62,6 +63,7 @@ class AppStore extends ChangeNotifier {
     s.reminder = s._prefs.getBool('reminder') ?? false;
     s.reminderHour = s._prefs.getInt('reminderHour') ?? 21;
     s.reminderMinute = s._prefs.getInt('reminderMinute') ?? 0;
+    s.autoCategoryId = s._prefs.getString('autoCategory') ?? 'other_e';
     final lb = s._prefs.getString('lastBackup');
     s.lastBackup = lb == null ? null : DateTime.tryParse(lb);
     s._sort();
@@ -98,6 +100,7 @@ class AppStore extends ChangeNotifier {
     await _prefs.setInt('reminderHour', reminderHour);
     await _prefs.setInt('reminderMinute', reminderMinute);
     if (lastBackup != null) await _prefs.setString('lastBackup', lastBackup!.toIso8601String());
+    await _prefs.setString('autoCategory', autoCategoryId);
   }
 
   void _commit() {
@@ -225,6 +228,64 @@ class AppStore extends ChangeNotifier {
   void deleteRecurring(String id) {
     recurrings.removeWhere((x) => x.id == id);
     _commit();
+  }
+
+  // ---- Tự ghi từ Phím tắt (Apple Pay) ----
+  static const _pendingKey = 'pendingTxs';
+
+  void setAutoCategory(String id) {
+    autoCategoryId = id;
+    _commit();
+  }
+
+  /// Danh mục cho khoản chi tại [merchant]: lấy theo lần gần nhất chi ở cùng nơi,
+  /// nếu chưa có thì dùng [autoCategoryId].
+  String guessCategory(String merchant) {
+    final key = searchKey(merchant.trim());
+    if (key.isNotEmpty) {
+      for (final t in txs) {
+        // txs đã sắp xếp mới nhất trước
+        if (t.type == TxType.expense && searchKey(t.note.trim()) == key && cat(t.categoryId) != null) {
+          return t.categoryId;
+        }
+      }
+    }
+    if (cat(autoCategoryId)?.type == TxType.expense) return autoCategoryId;
+    return catsOf(TxType.expense).first.id;
+  }
+
+  /// Nhập các khoản chi mà hành động "Ghi khoản chi" của Phím tắt đã cất vào hàng chờ.
+  /// Trả về số khoản đã ghi.
+  Future<int> importPending() async {
+    await _prefs.reload(); // hàng chờ được ghi từ phía iOS, ngoài Flutter
+    final raw = _prefs.getString(_pendingKey);
+    if (raw == null) return 0;
+    await _prefs.remove(_pendingKey);
+    List<dynamic> list;
+    try {
+      list = jsonDecode(raw) as List<dynamic>;
+    } catch (_) {
+      return 0;
+    }
+    var n = 0;
+    final base = DateTime.now().microsecondsSinceEpoch;
+    for (final e in list) {
+      if (e is! Map) continue;
+      final amount = parseAmount('${e['amount'] ?? ''}');
+      if (amount <= 0) continue;
+      final merchant = '${e['merchant'] ?? ''}'.trim();
+      txs.add(Tx(
+        id: 'ap${base}_$n',
+        amount: amount,
+        type: TxType.expense,
+        categoryId: guessCategory(merchant),
+        note: merchant,
+        date: DateTime.tryParse('${e['date']}')?.toLocal() ?? DateTime.now(),
+      ));
+      n++;
+    }
+    if (n > 0) _commit();
+    return n;
   }
 
   // ---- Ngân sách ----

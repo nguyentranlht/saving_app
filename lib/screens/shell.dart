@@ -32,6 +32,15 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _importApplePay());
+  }
+
+  /// Nhập các khoản chi mà Phím tắt (tự động hóa Apple Pay) đã gửi sang.
+  Future<void> _importApplePay() async {
+    final n = await StoreScope.read(context).importPending();
+    if (n > 0 && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.current.autoRecorded(n))));
+    }
   }
 
   @override
@@ -43,7 +52,10 @@ class _ShellState extends State<Shell> with WidgetsBindingObserver {
   /// Quay lại app (ví dụ sang ngày mới) thì ghi các giao dịch định kỳ đã đến hạn.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) StoreScope.read(context).runRecurring();
+    if (state == AppLifecycleState.resumed) {
+      StoreScope.read(context).runRecurring();
+      _importApplePay();
+    }
   }
 
   void _go(int i) => setState(() => _tab = i);
