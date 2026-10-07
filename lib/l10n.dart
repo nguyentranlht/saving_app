@@ -112,13 +112,13 @@ class S {
       'Log spending in a few taps without opening the app. The "Sổ thu chi" menu is ready in the Shortcuts app, under Saving App.');
   List<(String, String, String)> get menuOptions => en
       ? const [
-          ('💸', 'Ghi khoản chi', 'Enter the amount, then pick a spending category.'),
-          ('💰', 'Ghi khoản thu', 'Enter the amount, then pick an income category.'),
+          ('💸', 'Ghi khoản chi', 'Enter the amount (in thousands: 45 = 45,000đ, 45.32 = 45,320đ), then pick a spending category.'),
+          ('💰', 'Ghi khoản thu', 'Enter the amount (in thousands: 45 = 45,000đ, 45.32 = 45,320đ), then pick an income category.'),
           ('📈', 'Xem thống kê chi tiêu', 'Opens the app on the Stats tab.'),
         ]
       : const [
-          ('💸', 'Ghi khoản chi', 'Nhập số tiền, rồi chọn mục chi tiêu.'),
-          ('💰', 'Ghi khoản thu', 'Nhập số tiền, rồi chọn mục thu.'),
+          ('💸', 'Ghi khoản chi', 'Nhập số tiền (gõ 45 là 45.000đ, 45,32 là 45.320đ), rồi chọn mục chi tiêu.'),
+          ('💰', 'Ghi khoản thu', 'Nhập số tiền (gõ 45 là 45.000đ, 45,32 là 45.320đ), rồi chọn mục thu.'),
           ('📈', 'Xem thống kê chi tiêu', 'Mở app ở tab Thống kê.'),
         ];
   String get menuSetupTitle => _('Đưa menu ra màn hình chính:', 'Add the menu to your Home Screen:');

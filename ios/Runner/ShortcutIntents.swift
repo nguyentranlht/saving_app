@@ -124,8 +124,10 @@ struct MenuIntent: AppIntent {
   @Parameter(title: "Chức năng", requestValueDialog: IntentDialog("Chọn chức năng"))
   var choice: MenuChoice
 
-  @Parameter(title: "Số tiền")
-  var amount: Int?
+  /// Ô Double: bàn phím số của iOS có thêm dấu thập phân (","), để gõ "45,32" = 45.320đ.
+  /// inclusiveRange chặn số âm / 0 (inputOptions chỉ có cho String).
+  @Parameter(title: "Số tiền", controlStyle: .field, inclusiveRange: (0.001, 999_999_999_999))
+  var amount: Double?
 
   @Parameter(title: "Danh mục")
   var category: CategoryEntity?
@@ -142,13 +144,15 @@ struct MenuIntent: AppIntent {
     }
     let isIncome = choice == .income
 
-    // Số tiền
-    var money = amount ?? 0
-    if money <= 0 {
-      let ask = isIncome ? AppData.t("Thu bao nhiêu tiền?", "How much did you receive?")
-                         : AppData.t("Chi bao nhiêu tiền?", "How much did you spend?")
-      money = try await $amount.requestValue(IntentDialog(stringLiteral: ask)) ?? 0
+    // Số tiền. Bàn phím số của iOS không có phím "000", nên số dưới 1.000 được hiểu là
+    // nghìn đồng: 45 -> 45.000đ, 45,32 -> 45.320đ; từ 1.000 trở lên giữ nguyên (45320 -> 45.320đ).
+    var typed = amount ?? 0
+    if typed <= 0 {
+      let ask = isIncome ? AppData.t("Số tiền thu? (45 = 45.000đ)", "How much did you receive? (45 = 45,000đ)")
+                         : AppData.t("Số tiền chi? (45 = 45.000đ)", "How much did you spend? (45 = 45,000đ)")
+      typed = try await $amount.requestValue(IntentDialog(stringLiteral: ask)) ?? 0
     }
+    let money = Int((typed < 1000 ? typed * 1000 : typed).rounded())
     guard money > 0 else {
       throw $amount.needsValueError(IntentDialog(stringLiteral: AppData.t("Bao nhiêu tiền?", "How much?")))
     }
