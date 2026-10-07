@@ -46,6 +46,12 @@ void main() {
           for (final tab in [s.tabHistory, s.tabStats, s.tabSettings, s.tabOverview]) {
             await tester.tap(find.text(tab).last);
             await tester.pumpAndSettle();
+            if (tab == s.tabStats) {
+              for (final m in [s.month, s.year]) {
+                await tester.tap(find.text(m).last);
+                await tester.pumpAndSettle();
+              }
+            }
           }
           final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
           for (final page in <Widget>[

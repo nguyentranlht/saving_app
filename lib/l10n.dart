@@ -181,16 +181,24 @@ class S {
   // ---- Thống kê ----
   String get week => _('Tuần', 'Week');
   String get month => _('Tháng', 'Month');
-  String spentLast(int days) => _('Chi tiêu $days ngày qua', 'Spent in the last $days days');
-  String delta(int pct, bool weekly) {
-    final period = weekly ? _('tuần', 'week') : _('tháng', 'month');
-    if (pct == 0) return _('Không đổi so với $period trước', 'No change from last $period');
-    final p = pct.abs();
-    return pct < 0
-        ? _('Giảm $p% so với $period trước', 'Down $p% from last $period')
-        : _('Tăng $p% so với $period trước', 'Up $p% from last $period');
+  String get year => _('Năm', 'Year');
+  String get spent => _('Đã chi', 'Spent');
+  String get backToNow => _('Về hiện tại', 'Back to now');
+  String weekRange(DateTime from, DateTime toInclusive) => '${dayMonthShort(from)} – ${dayMonthShort(toInclusive)}';
+  String monthShort(int m) => en ? _months[m - 1] : 'T$m';
+
+  /// [period]: 0 tuần, 1 tháng, 2 năm. [samePoint]: kỳ hiện tại chưa hết nên so với cùng thời điểm kỳ trước.
+  String delta(int pct, int period, {bool samePoint = false}) {
+    final p = [_('tuần', 'week'), _('tháng', 'month'), _('năm', 'year')][period];
+    final vs = samePoint ? _('cùng kỳ $p trước', 'same point last $p') : _('$p trước', 'last $p');
+    if (pct == 0) return _('Không đổi so với $vs', 'No change vs $vs');
+    final a = pct.abs();
+    return pct < 0 ? _('Giảm $a% so với $vs', 'Down $a% vs $vs') : _('Tăng $a% so với $vs', 'Up $a% vs $vs');
   }
 
+  String get newVsPrev => _('Mới', 'New');
+  String get monthByMonth => _('So sánh các tháng', 'Month by month');
+  String get monthByMonthHint => _('Chạm vào một tháng để xem chi tiết', 'Tap a month to see details');
   String get incomeAndExpense => _('Thu và chi', 'Income & expenses');
   String get unitNote =>
       _('Đơn vị: nghìn / triệu đồng theo số liệu thực tế của bạn.', 'Units: thousands (k) / millions (M) of dong.');
