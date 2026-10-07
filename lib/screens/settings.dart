@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../export.dart';
-import '../format.dart';
+import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
@@ -14,35 +14,46 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
+    final s = S.of(context);
     final isDark = store.themeMode == ThemeMode.dark;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4),
-          child: Text('Cài đặt', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Text(s.tabSettings, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800)),
         ),
-        _section(c, 'GIAO DIỆN'),
+        _section(c, s.appearance),
         AppCard(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Expanded(child: _themeOption(context, c, 'Sáng', false, !isDark, store)),
+              Expanded(child: _themeOption(context, c, s.light, false, !isDark, store)),
               const SizedBox(width: 12),
-              Expanded(child: _themeOption(context, c, 'Tối', true, isDark, store)),
+              Expanded(child: _themeOption(context, c, s.dark, true, isDark, store)),
             ],
           ),
         ),
-        _section(c, 'CHUNG'),
+        _section(c, s.language),
+        AppCard(
+          padding: const EdgeInsets.all(12),
+          child: Segmented(
+            labels: const ['Tiếng Việt', 'English'],
+            index: store.lang == AppLang.vi ? 0 : 1,
+            height: 40,
+            onChanged: (i) => store.setLang(i == 0 ? AppLang.vi : AppLang.en),
+          ),
+        ),
+        _section(c, s.general),
         AppCard(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              _row(c, Icons.attach_money, const Color(0xFF16A06A), 'Đơn vị tiền tệ',
+              _row(c, Icons.attach_money, const Color(0xFF16A06A), s.currency,
                   trailing: Text('VND (đ)', style: TextStyle(color: c.muted, fontSize: 16))),
               Divider(height: 1, color: c.divider),
-              _row(c, Icons.grid_view_rounded, const Color(0xFF8B5CF6), 'Quản lý danh mục',
+              _row(c, Icons.grid_view_rounded, const Color(0xFF8B5CF6), s.manageCategories,
                   onTap: () => Navigator.of(context)
                       .push(MaterialPageRoute(builder: (_) => const CategoriesScreen())),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -51,10 +62,8 @@ class SettingsScreen extends StatelessWidget {
                     Icon(Icons.chevron_right, color: c.muted),
                   ])),
               Divider(height: 1, color: c.divider),
-              _row(c, Icons.notifications_none, const Color(0xFF3B82F6), 'Nhắc ghi chép',
-                  sub: store.reminder
-                      ? 'Mỗi ngày lúc ${two(store.reminderHour)}:${two(store.reminderMinute)} · chạm để đổi giờ'
-                      : 'Đang tắt',
+              _row(c, Icons.notifications_none, const Color(0xFF3B82F6), s.reminder,
+                  sub: store.reminder ? s.reminderOn(store.reminderHour, store.reminderMinute) : s.off,
                   onTap: store.reminder ? () => _pickTime(context, store) : null,
                   trailing: Switch(
                     value: store.reminder,
@@ -65,24 +74,24 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
         ),
-        _section(c, 'DỮ LIỆU'),
+        _section(c, s.data),
         AppCard(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              _row(c, Icons.download_outlined, c.muted, 'Xuất dữ liệu (CSV)',
+              _row(c, Icons.download_outlined, c.muted, s.exportCsv,
                   onTap: () => _export(context, store),
                   trailing: Icon(Icons.chevron_right, color: c.muted)),
               Divider(height: 1, color: c.divider),
-              _row(c, Icons.delete_outline, c.expense, 'Xóa toàn bộ dữ liệu',
-                  sub: 'Không thể hoàn tác',
+              _row(c, Icons.delete_outline, c.expense, s.clearAll,
+                  sub: s.cannotUndoShort,
                   titleColor: c.expense,
                   onTap: () => _confirmClear(context, store)),
             ],
           ),
         ),
         const SizedBox(height: 22),
-        Center(child: Text('Sổ thu chi · phiên bản 1.0', style: TextStyle(color: c.muted))),
+        Center(child: Text(s.version, style: TextStyle(color: c.muted))),
       ],
     );
   }
@@ -169,9 +178,7 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _toggleReminder(BuildContext context, AppStore store, bool v) async {
     final ok = await store.setReminder(v);
     if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Chưa được cấp quyền thông báo. Hãy bật trong Cài đặt của điện thoại.'),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.current.noPermission)));
     }
   }
 
@@ -179,7 +186,7 @@ class SettingsScreen extends StatelessWidget {
     final t = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: store.reminderHour, minute: store.reminderMinute),
-      helpText: 'Giờ nhắc ghi chép',
+      helpText: S.current.reminderTime,
     );
     if (t != null) await store.setReminderTime(t.hour, t.minute);
   }
@@ -187,7 +194,7 @@ class SettingsScreen extends StatelessWidget {
   Future<void> _export(BuildContext context, AppStore store) async {
     if (store.txs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Chưa có giao dịch nào để xuất')),
+        SnackBar(content: Text(S.current.nothingToExport)),
       );
       return;
     }
@@ -196,7 +203,7 @@ class SettingsScreen extends StatelessWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Không xuất được dữ liệu')),
+          SnackBar(content: Text(S.current.exportFailed)),
         );
       }
     }
@@ -206,11 +213,11 @@ class SettingsScreen extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xóa toàn bộ dữ liệu?'),
-        content: const Text('Tất cả giao dịch sẽ bị xóa và danh mục trở về mặc định. Không thể hoàn tác.'),
+        title: Text(S.current.clearAllQ),
+        content: Text(S.current.clearAllBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Xóa hết')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.current.cancel)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(S.current.deleteAll)),
         ],
       ),
     );

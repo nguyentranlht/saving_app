@@ -1,3 +1,5 @@
+import 'l10n.dart';
+
 /// 1234567 -> "1.234.567"
 String groupDigits(int n) {
   final s = n.abs().toString();
@@ -21,7 +23,7 @@ String compact(int n) {
   if (a >= 1000000) {
     var s = (a / 1e6).toStringAsFixed(1);
     if (s.endsWith('.0')) s = s.substring(0, s.length - 2);
-    return '${s.replaceAll('.', ',')}tr';
+    return '${s.replaceAll('.', S.current.decimalSep)}${S.current.million}';
   }
   if (a >= 1000) return '${(a / 1000).round()}k';
   return '$a';
@@ -29,24 +31,18 @@ String compact(int n) {
 
 String two(int n) => n.toString().padLeft(2, '0');
 String hm(DateTime d) => '${two(d.hour)}:${two(d.minute)}';
-String dm(DateTime d) => '${d.day} thg ${d.month}';
+String dm(DateTime d) => S.current.dayMonth(d);
 
 bool sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
 
 String dayLabel(DateTime d, [DateTime? now]) {
   final n = now ?? DateTime.now();
-  if (sameDay(d, n)) return 'Hôm nay · ${dm(d)}';
+  if (sameDay(d, n)) return '${S.current.today} · ${dm(d)}';
   if (sameDay(d, n.subtract(const Duration(days: 1)))) {
-    return 'Hôm qua · ${dm(d)}';
+    return '${S.current.yesterday} · ${dm(d)}';
   }
   return d.year == n.year ? dm(d) : '${dm(d)}, ${d.year}';
 }
 
-String greeting([DateTime? now]) {
-  final h = (now ?? DateTime.now()).hour;
-  if (h < 11) return 'Chào buổi sáng';
-  if (h < 14) return 'Chào buổi trưa';
-  if (h < 18) return 'Chào buổi chiều';
-  return 'Chào buổi tối';
-}
+String greeting([DateTime? now]) => S.current.greeting((now ?? DateTime.now()).hour);

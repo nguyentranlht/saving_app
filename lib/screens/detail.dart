@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../format.dart';
+import '../l10n.dart';
 import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
@@ -15,6 +16,7 @@ class DetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
+    final s = S.of(context);
     final tx = store.tx(txId);
     if (tx == null) {
       // Đã bị xóa -> tự thoát.
@@ -35,10 +37,10 @@ class DetailScreen extends StatelessWidget {
               Row(
                 children: [
                   CircleBtn(icon: Icons.chevron_left, onTap: () => Navigator.of(context).pop()),
-                  const Expanded(
+                  Expanded(
                     child: Center(
-                      child: Text('Chi tiết giao dịch',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                      child: Text(s.txDetail,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                     ),
                   ),
                   const SizedBox(width: 46),
@@ -54,7 +56,7 @@ class DetailScreen extends StatelessWidget {
                     children: [
                       CatIcon(category: cat, size: 76),
                       const SizedBox(height: 12),
-                      Text(cat?.name ?? 'Đã xóa',
+                      Text(s.catName(cat),
                           style: TextStyle(color: c.muted, fontSize: 18, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       Text(vnd(tx.signed),
@@ -63,7 +65,7 @@ class DetailScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(color: color.op(0.14), borderRadius: BorderRadius.circular(20)),
-                        child: Text(tx.type == TxType.expense ? 'Khoản chi' : 'Khoản thu',
+                        child: Text(tx.type == TxType.expense ? s.expense : s.income,
                             style: TextStyle(color: color, fontWeight: FontWeight.w800)),
                       ),
                     ],
@@ -76,12 +78,12 @@ class DetailScreen extends StatelessWidget {
                 radius: 28,
                 child: Column(
                   children: [
-                    _row(c, 'Danh mục', cat?.name ?? '—', bold: true),
+                    _row(c, s.category, cat == null ? '—' : s.catName(cat), bold: true),
                     Divider(height: 1, color: c.divider),
-                    _row(c, 'Thời gian', '${hm(tx.date)} · ${tx.date.day} thg ${tx.date.month}, ${tx.date.year}',
+                    _row(c, s.time, '${hm(tx.date)} · ${dm(tx.date)}, ${tx.date.year}',
                         bold: true),
                     Divider(height: 1, color: c.divider),
-                    _row(c, 'Ghi chú', tx.note.isEmpty ? 'Không có ghi chú' : tx.note),
+                    _row(c, s.note, tx.note.isEmpty ? s.noNote : tx.note),
                   ],
                 ),
               ),
@@ -91,7 +93,7 @@ class DetailScreen extends StatelessWidget {
                   Expanded(
                     child: _btn(
                       icon: Icons.edit_outlined,
-                      label: 'Sửa',
+                      label: s.edit,
                       bg: c.card,
                       fg: c.text,
                       onTap: () => Navigator.of(context).push(MaterialPageRoute(
@@ -104,7 +106,7 @@ class DetailScreen extends StatelessWidget {
                   Expanded(
                     child: _btn(
                       icon: Icons.delete_outline,
-                      label: 'Xóa',
+                      label: s.delete,
                       bg: c.expense.op(0.15),
                       fg: c.expense,
                       onTap: () => _confirmDelete(context, store, tx),
@@ -123,11 +125,11 @@ class DetailScreen extends StatelessWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xóa giao dịch?'),
-        content: const Text('Thao tác này không thể hoàn tác.'),
+        title: Text(S.current.deleteTxQ),
+        content: Text(S.current.cannotUndo),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Xóa')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(S.current.cancel)),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(S.current.delete)),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../format.dart';
+import '../l10n.dart';
 import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
@@ -21,13 +22,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
+    final s = S.of(context);
     final q = _q.trim().toLowerCase();
 
     final list = store.txs.where((t) {
       if (_filter == 1 && t.type != TxType.expense) return false;
       if (_filter == 2 && t.type != TxType.income) return false;
       if (q.isEmpty) return true;
-      final name = store.cat(t.categoryId)?.name.toLowerCase() ?? '';
+      final name = s.catName(store.cat(t.categoryId)).toLowerCase();
       return name.contains(q) || t.note.toLowerCase().contains(q);
     }).toList();
 
@@ -47,8 +49,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            const Expanded(child: Text('Lịch sử', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800))),
-            Text('${store.txs.length} giao dịch tất cả', style: TextStyle(color: c.muted, fontSize: 13)),
+            Expanded(child: Text(s.tabHistory, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800))),
+            Text(s.txTotal(store.txs.length), style: TextStyle(color: c.muted, fontSize: 13)),
           ],
         ),
         const SizedBox(height: 14),
@@ -59,7 +61,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             onChanged: (v) => setState(() => _q = v),
             decoration: InputDecoration(
               icon: Icon(Icons.search, color: c.muted),
-              hintText: 'Tìm danh mục hoặc ghi chú',
+              hintText: s.searchHint,
               hintStyle: TextStyle(color: c.muted),
               border: InputBorder.none,
             ),
@@ -68,7 +70,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         const SizedBox(height: 12),
         Row(
           children: [
-            for (final (i, l) in ['Tất cả', 'Khoản chi', 'Khoản thu'].indexed)
+            for (final (i, l) in [s.all, s.expense, s.income].indexed)
               Padding(
                 padding: const EdgeInsets.only(right: 10),
                 child: GestureDetector(
@@ -90,7 +92,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ],
         ),
         const SizedBox(height: 14),
-        if (groups.isEmpty) const EmptyHint('Không có giao dịch nào'),
+        if (groups.isEmpty) EmptyHint(s.noTx),
         for (final g in groups) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(6, 6, 6, 8),
@@ -99,7 +101,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 Expanded(
                     child: Text(dayLabel(g.first.date),
                         style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
-                Text('Ròng ${vnd(g.fold(0, (s, t) => s + t.signed), sign: true)}',
+                Text('${s.net} ${vnd(g.fold(0, (s, t) => s + t.signed), sign: true)}',
                     style: TextStyle(color: c.muted, fontSize: 13)),
               ],
             ),

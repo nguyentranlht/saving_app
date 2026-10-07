@@ -4,6 +4,8 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'l10n.dart';
+
 /// Thông báo nhắc ghi chép hằng ngày (chỉ Android / iOS).
 class Reminder {
   static final _plugin = FlutterLocalNotificationsPlugin();
@@ -56,20 +58,21 @@ class Reminder {
     final now = tz.TZDateTime.now(tz.local);
     var at = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (!at.isAfter(now)) at = at.add(const Duration(days: 1));
+    final s = S.current;
     await _plugin.zonedSchedule(
       _id,
-      'Sổ thu chi',
-      'Hôm nay bạn đã ghi chép thu chi chưa?',
+      s.appName,
+      s.reminderBody,
       at,
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_reminder',
-          'Nhắc ghi chép',
-          channelDescription: 'Nhắc ghi chép thu chi mỗi ngày',
+          s.reminder,
+          channelDescription: s.reminderChannelDesc,
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: const DarwinNotificationDetails(),
       ),
       // Không cần quyền "báo thức chính xác"; có thể lệch vài phút.
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

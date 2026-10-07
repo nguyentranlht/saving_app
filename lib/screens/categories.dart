@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
@@ -19,6 +20,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
+    final s = S.of(context);
     final cats = store.catsOf(_type);
 
     return Scaffold(
@@ -29,9 +31,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             Row(
               children: [
                 CircleBtn(icon: Icons.chevron_left, onTap: () => Navigator.of(context).pop()),
-                const Expanded(
+                Expanded(
                   child: Center(
-                    child: Text('Quản lý danh mục', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                    child: Text(s.manageCategories, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                   ),
                 ),
                 CircleBtn(
@@ -44,14 +46,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             ),
             const SizedBox(height: 16),
             Segmented(
-              labels: const ['Khoản chi', 'Khoản thu'],
+              labels: [s.expense, s.income],
               index: _type == TxType.expense ? 0 : 1,
               activeColors: [c.expense, c.income],
               height: 46,
               onChanged: (i) => setState(() => _type = i == 0 ? TxType.expense : TxType.income),
             ),
             const SizedBox(height: 14),
-            Text('Chạm vào một danh mục để đổi tên, biểu tượng hoặc màu.',
+            Text(s.categoriesHint,
                 style: TextStyle(color: c.muted, fontSize: 15)),
             const SizedBox(height: 14),
             AppCard(
@@ -73,9 +75,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(cats[i].name,
+                                  Text(s.catName(cats[i]),
                                       style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-                                  Text('${store.countIn(cats[i].id)} giao dịch',
+                                  Text(s.txCount(store.countIn(cats[i].id)),
                                       style: TextStyle(color: c.muted, fontSize: 14)),
                                 ],
                               ),
@@ -103,7 +105,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                   children: [
                     Icon(Icons.add, color: c.primary),
                     const SizedBox(width: 8),
-                    Text('Thêm danh mục mới',
+                    Text(s.addCategory,
                         style: TextStyle(color: c.primary, fontWeight: FontWeight.w800, fontSize: 17)),
                   ],
                 ),
@@ -117,7 +119,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   /// Bottom sheet thêm / sửa danh mục.
   void _edit(BuildContext context, AppStore store, Category? existing) {
-    final nameCtl = TextEditingController(text: existing?.name ?? '');
+    final s = S.current;
+    final nameCtl = TextEditingController(text: existing == null ? '' : s.catName(existing));
     var icon = existing?.icon ?? 'shop';
     var color = existing?.color ?? kPalette.first;
     final type = existing?.type ?? _type;
@@ -140,43 +143,61 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(existing == null ? 'Danh mục mới' : 'Sửa danh mục',
+                  Text(existing == null ? s.newCategory : s.editCategory,
                       style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 14),
                   TextField(
                     controller: nameCtl,
                     decoration: InputDecoration(
-                      hintText: 'Tên danh mục',
+                      hintText: s.categoryName,
                       filled: true,
                       fillColor: c.chip,
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text('Biểu tượng', style: TextStyle(color: c.muted, fontWeight: FontWeight.w700)),
+                  Text(s.icon, style: TextStyle(color: c.muted, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      for (final k in kIcons.keys)
-                        GestureDetector(
-                          onTap: () => setS(() => icon = k),
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: icon == k ? Color(color).op(0.2) : c.chip,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: icon == k ? Color(color) : Colors.transparent, width: 2),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 280),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          for (final g in kIconGroups.entries) ...[
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, bottom: 8),
+                              child: Text(s.iconGroup(g.key), style: TextStyle(color: c.muted, fontSize: 12.5)),
                             ),
-                            child: Icon(kIcons[k], color: icon == k ? Color(color) : c.muted),
-                          ),
-                        ),
-                    ],
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: [
+                                for (final e in g.value.entries)
+                                  GestureDetector(
+                                    onTap: () => setS(() => icon = e.key),
+                                    child: Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: icon == e.key ? Color(color).op(0.2) : c.chip,
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                            color: icon == e.key ? Color(color) : Colors.transparent, width: 2),
+                                      ),
+                                      child: Icon(e.value, color: icon == e.key ? Color(color) : c.muted),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  Text('Màu', style: TextStyle(color: c.muted, fontWeight: FontWeight.w700)),
+                  Text(s.color, style: TextStyle(color: c.muted, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 12,
@@ -212,7 +233,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               minimumSize: const Size.fromHeight(52),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
                             ),
-                            child: const Text('Xóa', style: TextStyle(fontWeight: FontWeight.w800)),
+                            child: Text(s.delete, style: const TextStyle(fontWeight: FontWeight.w800)),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -239,7 +260,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             minimumSize: const Size.fromHeight(52),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
                           ),
-                          child: const Text('Lưu', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                          child: Text(s.save, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                         ),
                       ),
                     ],

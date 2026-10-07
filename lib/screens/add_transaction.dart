@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../format.dart';
+import '../l10n.dart';
 import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
@@ -102,6 +103,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
+    final s = S.of(context);
     final cats = store.catsOf(_type);
     final selected = cats.any((x) => x.id == _catId) ? _catId! : (cats.isNotEmpty ? cats.first.id : '');
     final accent = _type == TxType.expense ? c.expense : c.income;
@@ -120,7 +122,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       CircleBtn(icon: Icons.close, onTap: () => Navigator.of(context).pop()),
                       Expanded(
                         child: Center(
-                          child: Text(widget.editing == null ? 'Ghi giao dịch' : 'Sửa giao dịch',
+                          child: Text(widget.editing == null ? s.newTx : s.editTx,
                               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                         ),
                       ),
@@ -129,7 +131,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                   ),
                   const SizedBox(height: 16),
                   Segmented(
-                    labels: const ['Khoản chi', 'Khoản thu'],
+                    labels: [s.expense, s.income],
                     index: _type == TxType.expense ? 0 : 1,
                     activeColors: [c.expense, c.income],
                     height: 46,
@@ -145,7 +147,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Số tiền', style: TextStyle(color: c.muted, fontSize: 15)),
+                        Text(s.amount, style: TextStyle(color: c.muted, fontSize: 15)),
                         Row(
                           children: [
                             Expanded(
@@ -191,7 +193,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  const Text('Danh mục', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                  Text(s.category, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 10),
                   GridView.count(
                     crossAxisCount: 4,
@@ -217,7 +219,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               children: [
                                 CatIcon(category: cat, size: 46),
                                 const SizedBox(height: 8),
-                                Text(cat.name,
+                                Text(s.catName(cat),
                                     textAlign: TextAlign.center,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
@@ -241,7 +243,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               child: TextField(
                                 controller: _noteCtl,
                                 decoration: InputDecoration(
-                                  hintText: 'Thêm ghi chú (không bắt buộc)',
+                                  hintText: s.noteHint,
                                   hintStyle: TextStyle(color: c.muted),
                                   border: InputBorder.none,
                                 ),
@@ -261,7 +263,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                                 Expanded(
                                     child: Text('${dayLabel(_date).replaceFirst(' · ', ', ')} · ${hm(_date)}',
                                         style: const TextStyle(fontSize: 16))),
-                                Text('Đổi', style: TextStyle(color: c.muted, fontSize: 15)),
+                                Text(s.change, style: TextStyle(color: c.muted, fontSize: 15)),
                               ],
                             ),
                           ),
@@ -287,7 +289,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   ),
-                  child: Text(_type == TxType.expense ? 'Lưu khoản chi' : 'Lưu khoản thu',
+                  child: Text(_type == TxType.expense ? s.saveExpense : s.saveIncome,
                       style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 ),
               ),

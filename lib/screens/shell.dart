@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n.dart';
 import '../models.dart';
 import '../theme.dart';
 import 'add_transaction.dart';
@@ -31,6 +32,7 @@ class _ShellState extends State<Shell> {
   @override
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
+    final s = S.of(context);
     final pages = [
       OverviewScreen(onGoTab: _go),
       const HistoryScreen(),
@@ -53,11 +55,11 @@ class _ShellState extends State<Shell> {
               children: [
                 Row(
                   children: [
-                    _item(0, Icons.home_outlined, Icons.home_rounded, 'Tổng quan'),
-                    _item(1, Icons.schedule, Icons.schedule, 'Lịch sử'),
+                    _item(0, Icons.home_outlined, Icons.home_rounded, s.tabOverview),
+                    _item(1, Icons.schedule, Icons.schedule, s.tabHistory),
                     const Expanded(child: SizedBox()),
-                    _item(2, Icons.bar_chart_rounded, Icons.bar_chart_rounded, 'Thống kê'),
-                    _item(3, Icons.tune, Icons.tune, 'Cài đặt'),
+                    _item(2, Icons.bar_chart_rounded, Icons.bar_chart_rounded, s.tabStats),
+                    _item(3, Icons.tune, Icons.tune, s.tabSettings),
                   ],
                 ),
                 Positioned(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'l10n.dart';
 import 'screens/shell.dart';
 import 'store.dart';
 import 'theme.dart';
@@ -23,12 +24,12 @@ class SoThuChiApp extends StatelessWidget {
       child: ListenableBuilder(
         listenable: store,
         builder: (context, _) => MaterialApp(
-          title: 'Sổ thu chi',
+          title: S.current.appName,
           debugShowCheckedModeBanner: false,
           theme: buildTheme(AppColors.light),
           darkTheme: buildTheme(AppColors.dark),
           themeMode: store.themeMode,
-          locale: const Locale('vi'),
+          locale: Locale(store.lang.name),
           supportedLocales: const [Locale('vi'), Locale('en')],
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,

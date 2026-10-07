@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../format.dart';
+import '../l10n.dart';
 import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
@@ -20,6 +21,7 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
+    final s = S.of(context);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final tomorrow = today.add(const Duration(days: 1));
@@ -37,7 +39,7 @@ class _StatsScreenState extends State<StatsScreen> {
     if (_mode == 0) {
       // Tuần hiện tại: T2 -> CN
       final monday = today.subtract(Duration(days: today.weekday - 1));
-      const names = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+      final names = s.weekdays;
       for (var i = 0; i < 7; i++) {
         final d0 = monday.add(Duration(days: i));
         final d1 = d0.add(const Duration(days: 1));
@@ -50,7 +52,7 @@ class _StatsScreenState extends State<StatsScreen> {
       for (var i = 4; i >= 0; i--) {
         final d1 = tomorrow.subtract(Duration(days: i * 6));
         final d0 = d1.subtract(const Duration(days: 6));
-        labels.add(dm(d0).replaceAll(' thg ', '/'));
+        labels.add(s.dayMonthShort(d0));
         inc.add(store.total(TxType.income, from: d0, to: d1));
         exp.add(store.total(TxType.expense, from: d0, to: d1));
       }
@@ -65,9 +67,7 @@ class _StatsScreenState extends State<StatsScreen> {
     if (prev > 0) {
       final pct = ((spent - prev) / prev * 100).round();
       down = pct <= 0;
-      deltaText = pct == 0
-          ? 'Không đổi so với ${_mode == 0 ? 'tuần' : 'tháng'} trước'
-          : '${down ? 'Giảm' : 'Tăng'} ${pct.abs()}% so với ${_mode == 0 ? 'tuần' : 'tháng'} trước';
+      deltaText = s.delta(pct, _mode == 0);
     }
     final other = store.cat('other_e');
     final otherShare = (other != null && topTotal > 0)
@@ -79,11 +79,11 @@ class _StatsScreenState extends State<StatsScreen> {
       children: [
         Row(
           children: [
-            const Expanded(child: Text('Thống kê', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800))),
+            Expanded(child: Text(s.tabStats, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800))),
             SizedBox(
               width: 180,
               child: Segmented(
-                labels: const ['Tuần', 'Tháng'],
+                labels: [s.week, s.month],
                 index: _mode,
                 height: 34,
                 onChanged: (i) => setState(() => _mode = i),
@@ -96,7 +96,7 @@ class _StatsScreenState extends State<StatsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_mode == 0 ? 'Chi tiêu 7 ngày qua' : 'Chi tiêu 30 ngày qua',
+              Text(s.spentLast(days),
                   style: TextStyle(color: c.muted, fontSize: 15)),
               const SizedBox(height: 6),
               Text(compact(spent),
@@ -129,11 +129,12 @@ class _StatsScreenState extends State<StatsScreen> {
             children: [
               Row(
                 children: [
-                  const Expanded(
-                      child: Text('Thu và chi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
-                  _dot(c.income, 'Thu'),
+                  Expanded(
+                      child: Text(s.incomeAndExpense,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+                  _dot(c.income, s.incomeShort),
                   const SizedBox(width: 14),
-                  _dot(c.expense, 'Chi'),
+                  _dot(c.expense, s.expenseShort),
                 ],
               ),
               const SizedBox(height: 18),
@@ -173,7 +174,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              Text('Đơn vị: nghìn / triệu đồng theo số liệu thực tế của bạn.',
+              Text(s.unitNote,
                   style: TextStyle(color: c.muted, fontSize: 12.5)),
             ],
           ),
@@ -183,9 +184,9 @@ class _StatsScreenState extends State<StatsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Chi nhiều nhất', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Text(s.topSpending, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               const SizedBox(height: 12),
-              if (top.isEmpty) const EmptyHint('Chưa có khoản chi trong giai đoạn này'),
+              if (top.isEmpty) EmptyHint(s.noExpenseInPeriod),
               for (final e in top) ...[
                 Row(children: [
                   Container(
@@ -193,7 +194,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       height: 12,
                       decoration: BoxDecoration(color: Color(e.key.color), shape: BoxShape.circle)),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(e.key.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16))),
+                  Expanded(child: Text(s.catName(e.key), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16))),
                   Text('${(e.value / topTotal * 100).round()}%',
                       style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                 ]),
@@ -233,9 +234,9 @@ class _StatsScreenState extends State<StatsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Gợi ý cho bạn', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                      Text(s.tipTitle, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                       const SizedBox(height: 4),
-                      Text('Khoản chi "Khác" đang chiếm hơn một nửa. Thử tách ra các danh mục cụ thể để dễ theo dõi hơn.',
+                      Text(s.otherTip(s.catName(other)),
                           style: TextStyle(color: c.muted, height: 1.4)),
                     ],
                   ),

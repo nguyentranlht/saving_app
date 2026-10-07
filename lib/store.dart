@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'format.dart';
+import 'l10n.dart';
 import 'models.dart';
 import 'reminder.dart';
 
@@ -15,12 +16,18 @@ class AppStore extends ChangeNotifier {
   List<Category> categories = [];
   List<Tx> txs = [];
   ThemeMode themeMode = ThemeMode.light;
+  AppLang lang = AppLang.vi;
   bool reminder = false;
   int reminderHour = 21;
   int reminderMinute = 0;
 
   static Future<AppStore> load() async {
     final s = AppStore._(await SharedPreferences.getInstance());
+    // Lần đầu mở app: theo ngôn ngữ điện thoại (tiếng Việt nếu không phải tiếng Anh).
+    final savedLang = s._prefs.getString('lang') ??
+        (WidgetsBinding.instance.platformDispatcher.locale.languageCode == 'en' ? 'en' : 'vi');
+    s.lang = AppLang.values.byName(savedLang);
+    S.use(s.lang);
     final cats = s._prefs.getString('categories');
     final list = s._prefs.getString('txs');
     s.categories = cats == null
@@ -43,17 +50,20 @@ class AppStore extends ChangeNotifier {
     return s;
   }
 
-  static List<Category> defaultCategories() => [
-        Category(id: 'food', name: 'Ăn uống', icon: 'food', color: 0xFFF59E0B, type: TxType.expense),
-        Category(id: 'move', name: 'Di chuyển', icon: 'move', color: 0xFF8B5CF6, type: TxType.expense),
-        Category(id: 'coffee', name: 'Cà phê', icon: 'coffee', color: 0xFFB45309, type: TxType.expense),
-        Category(id: 'work', name: 'Công tác phí', icon: 'work', color: 0xFF3B82F6, type: TxType.expense),
-        Category(id: 'health', name: 'Sức khỏe', icon: 'health', color: 0xFFEF5350, type: TxType.expense),
-        Category(id: 'other_e', name: 'Khác', icon: 'more', color: 0xFF9097A8, type: TxType.expense),
-        Category(id: 'salary', name: 'Lương', icon: 'wallet', color: 0xFF16A06A, type: TxType.income),
-        Category(id: 'debt', name: 'Được trả nợ', icon: 'debt', color: 0xFF0EA5E9, type: TxType.income),
-        Category(id: 'other_i', name: 'Khác', icon: 'more', color: 0xFF9097A8, type: TxType.income),
-      ];
+  static List<Category> defaultCategories() {
+    final n = S.current.defaultName;
+    return [
+      Category(id: 'food', name: n('food'), icon: 'food', color: 0xFFF59E0B, type: TxType.expense),
+      Category(id: 'move', name: n('move'), icon: 'move', color: 0xFF8B5CF6, type: TxType.expense),
+      Category(id: 'coffee', name: n('coffee'), icon: 'coffee', color: 0xFFB45309, type: TxType.expense),
+      Category(id: 'work', name: n('work'), icon: 'work', color: 0xFF3B82F6, type: TxType.expense),
+      Category(id: 'health', name: n('health'), icon: 'health', color: 0xFFEF5350, type: TxType.expense),
+      Category(id: 'other_e', name: n('other_e'), icon: 'more', color: 0xFF9097A8, type: TxType.expense),
+      Category(id: 'salary', name: n('salary'), icon: 'wallet', color: 0xFF16A06A, type: TxType.income),
+      Category(id: 'debt', name: n('debt'), icon: 'debt', color: 0xFF0EA5E9, type: TxType.income),
+      Category(id: 'other_i', name: n('other_i'), icon: 'more', color: 0xFF9097A8, type: TxType.income),
+    ];
+  }
 
   void _sort() => txs.sort((a, b) => b.date.compareTo(a.date));
 
@@ -62,6 +72,7 @@ class AppStore extends ChangeNotifier {
         'categories', jsonEncode(categories.map((e) => e.toJson()).toList()));
     await _prefs.setString('txs', jsonEncode(txs.map((e) => e.toJson()).toList()));
     await _prefs.setString('theme', themeMode == ThemeMode.dark ? 'dark' : 'light');
+    await _prefs.setString('lang', lang.name);
     await _prefs.setBool('reminder', reminder);
     await _prefs.setInt('reminderHour', reminderHour);
     await _prefs.setInt('reminderMinute', reminderMinute);
@@ -157,6 +168,13 @@ class AppStore extends ChangeNotifier {
     _commit();
   }
 
+  Future<void> setLang(AppLang l) async {
+    lang = l;
+    S.use(l);
+    _commit();
+    await syncReminder(); // đặt lại để nội dung thông báo theo ngôn ngữ mới
+  }
+
   /// Bật/tắt nhắc. Trả về false nếu người dùng không cấp quyền thông báo.
   Future<bool> setReminder(bool v) async {
     if (v) {
@@ -201,12 +219,13 @@ class AppStore extends ChangeNotifier {
     String esc(String s) => '"${s.replaceAll('"', '""')}"';
     String when(DateTime d) =>
         '${two(d.day)}/${two(d.month)}/${d.year} ${two(d.hour)}:${two(d.minute)}';
-    final b = StringBuffer('Ngày giờ,Loại,Danh mục,Số tiền (đ),Ghi chú\n');
+    final s = S.current;
+    final b = StringBuffer('${s.csvHeader}\n');
     for (final t in txs) {
       b.writeln([
         when(t.date),
-        t.type == TxType.expense ? 'Chi' : 'Thu',
-        esc(cat(t.categoryId)?.name ?? ''),
+        t.type == TxType.expense ? s.expenseShort : s.incomeShort,
+        esc(s.catName(cat(t.categoryId))),
         t.signed,
         esc(t.note),
       ].join(','));

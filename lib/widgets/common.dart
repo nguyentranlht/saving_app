@@ -3,33 +3,102 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../format.dart';
+import '../l10n.dart';
 import '../models.dart';
 import '../screens/detail.dart';
 import '../store.dart';
 import '../theme.dart';
 
-const Map<String, IconData> kIcons = {
-  'food': Icons.restaurant,
-  'move': Icons.directions_bus_filled_outlined,
-  'coffee': Icons.local_cafe_outlined,
-  'work': Icons.work_outline,
-  'health': Icons.favorite_border,
-  'more': Icons.more_horiz,
-  'debt': Icons.swap_horiz,
-  'wallet': Icons.account_balance_wallet_outlined,
-  'shop': Icons.shopping_bag_outlined,
-  'home': Icons.home_outlined,
-  'gift': Icons.card_giftcard,
-  'book': Icons.menu_book_outlined,
-  'movie': Icons.movie_outlined,
-  'pet': Icons.pets,
-  'phone': Icons.phone_iphone,
-  'trend': Icons.trending_up,
+/// Icon danh mục theo nhóm (tên nhóm: S.iconGroup). Key icon đã lưu trong dữ liệu, không được đổi tên.
+const Map<String, Map<String, IconData>> kIconGroups = {
+  'food': {
+    'food': Icons.restaurant,
+    'coffee': Icons.local_cafe_outlined,
+    'fastfood': Icons.fastfood_outlined,
+    'ramen': Icons.ramen_dining_outlined,
+    'bakery': Icons.bakery_dining_outlined,
+    'icecream': Icons.icecream_outlined,
+    'bar': Icons.local_bar_outlined,
+    'grocery': Icons.local_grocery_store_outlined,
+    'cake': Icons.cake_outlined,
+  },
+  'transport': {
+    'move': Icons.directions_bus_filled_outlined,
+    'car': Icons.directions_car_outlined,
+    'bike': Icons.two_wheeler,
+    'fuel': Icons.local_gas_station_outlined,
+    'taxi': Icons.local_taxi_outlined,
+    'flight': Icons.flight_outlined,
+    'train': Icons.train_outlined,
+    'parking': Icons.local_parking,
+  },
+  'home': {
+    'home': Icons.home_outlined,
+    'electric': Icons.bolt,
+    'water': Icons.water_drop_outlined,
+    'wifi': Icons.wifi,
+    'phone': Icons.phone_iphone,
+    'rent': Icons.key_outlined,
+    'repair': Icons.build_outlined,
+    'laundry': Icons.local_laundry_service_outlined,
+    'cleaning': Icons.cleaning_services_outlined,
+  },
+  'shopping': {
+    'shop': Icons.shopping_bag_outlined,
+    'cart': Icons.shopping_cart_outlined,
+    'clothes': Icons.checkroom,
+    'beauty': Icons.face_retouching_natural,
+    'devices': Icons.devices_other_outlined,
+    'furniture': Icons.chair_outlined,
+    'gift': Icons.card_giftcard,
+  },
+  'fun': {
+    'movie': Icons.movie_outlined,
+    'game': Icons.sports_esports_outlined,
+    'music': Icons.music_note_outlined,
+    'travel': Icons.luggage_outlined,
+    'sport': Icons.fitness_center,
+    'beach': Icons.beach_access_outlined,
+    'camera': Icons.photo_camera_outlined,
+    'party': Icons.celebration_outlined,
+  },
+  'health': {
+    'health': Icons.favorite_border,
+    'medicine': Icons.medication_outlined,
+    'hospital': Icons.local_hospital_outlined,
+    'spa': Icons.spa_outlined,
+    'baby': Icons.child_friendly_outlined,
+    'family': Icons.family_restroom,
+    'pet': Icons.pets,
+    'school': Icons.school_outlined,
+    'book': Icons.menu_book_outlined,
+  },
+  'finance': {
+    'wallet': Icons.account_balance_wallet_outlined,
+    'work': Icons.work_outline,
+    'salary': Icons.payments_outlined,
+    'trend': Icons.trending_up,
+    'invest': Icons.show_chart,
+    'bank': Icons.account_balance_outlined,
+    'savings': Icons.savings_outlined,
+    'card': Icons.credit_card,
+    'debt': Icons.swap_horiz,
+    'bonus': Icons.redeem,
+    'tax': Icons.receipt_long_outlined,
+    'insurance': Icons.shield_outlined,
+    'charity': Icons.volunteer_activism_outlined,
+    'more': Icons.more_horiz,
+  },
+};
+
+final Map<String, IconData> kIcons = {
+  for (final g in kIconGroups.values) ...g,
 };
 
 const List<int> kPalette = [
-  0xFFF59E0B, 0xFF8B5CF6, 0xFFB45309, 0xFF3B82F6, 0xFFEF5350, 0xFF9097A8,
-  0xFF16A06A, 0xFF0EA5E9, 0xFFEC4899, 0xFF14B8A6,
+  0xFFF59E0B, 0xFFF97316, 0xFFEF5350, 0xFFE11D48, 0xFFEC4899, 0xFF8B5CF6,
+  0xFF6366F1, 0xFF3B82F6, 0xFF0EA5E9, 0xFF14B8A6, 0xFF16A06A, 0xFF84CC16,
+  0xFFB45309, 0xFF9097A8,
 ];
 
 class AppCard extends StatelessWidget {
@@ -105,7 +174,7 @@ class Segmented extends StatelessWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 22),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   decoration: BoxDecoration(
                     color: i == index ? (c.isDark ? const Color(0xFF2F3F3A) : Colors.white) : Colors.transparent,
                     borderRadius: BorderRadius.circular(height),
@@ -157,8 +226,9 @@ class TxTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
+    final s = S.of(context);
     final cat = store.cat(tx.categoryId);
-    final sub = '${hm(tx.date)} · ${tx.type == TxType.expense ? 'Khoản chi' : 'Khoản thu'}';
+    final sub = '${hm(tx.date)} · ${tx.type == TxType.expense ? s.expense : s.income}';
     return InkWell(
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => DetailScreen(txId: tx.id)),
@@ -173,7 +243,7 @@ class TxTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(cat?.name ?? 'Đã xóa',
+                  Text(s.catName(cat),
                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 2),
                   Text(tx.note.isEmpty ? sub : '$sub · ${tx.note}',

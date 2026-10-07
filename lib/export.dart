@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'format.dart';
+import 'l10n.dart';
 import 'store.dart';
 
 /// Ghi CSV ra file tạm rồi mở bảng chia sẻ (Lưu vào Files, Drive, Zalo, email...).
@@ -16,6 +17,6 @@ Future<void> shareCsv(AppStore store) async {
   await file.writeAsString('﻿${store.exportCsv()}', flush: true);
   await Share.shareXFiles(
     [XFile(file.path, mimeType: 'text/csv', name: name)],
-    subject: 'Dữ liệu Sổ thu chi',
+    subject: S.current.exportSubject,
   );
 }

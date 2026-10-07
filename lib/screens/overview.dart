@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../format.dart';
+import '../l10n.dart';
 import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
@@ -22,6 +23,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
   Widget build(BuildContext context) {
     final c = AppColors.of(context);
     final store = StoreScope.of(context);
+    final s = S.of(context);
     final income = store.total(TxType.income);
     final expense = store.total(TxType.expense);
     final balance = income - expense;
@@ -40,8 +42,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(greeting(), style: TextStyle(color: c.muted, fontSize: 14)),
-                  const Text('Sổ thu chi của bạn',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+                  Text(s.yourBook,
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
                 ],
               ),
             ),
@@ -72,8 +74,8 @@ class _OverviewScreenState extends State<OverviewScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Số dư hiện tại', style: TextStyle(color: Colors.white, fontSize: 14)),
-                  Text('${store.txs.length} giao dịch',
+                  Text(s.balance, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                  Text(s.txCount(store.txs.length),
                       style: const TextStyle(color: Colors.white70, fontSize: 13)),
                 ],
               ),
@@ -85,17 +87,17 @@ class _OverviewScreenState extends State<OverviewScreen> {
               ),
               const SizedBox(height: 10),
               if (balance < 0)
-                _pill(Icons.warning_amber_rounded, 'Chi đang nhiều hơn thu',
+                _pill(Icons.warning_amber_rounded, s.spendingOver,
                     const Color(0xFFFFD54F), const Color(0x33FFC107)),
               if (balance >= 0 && store.txs.isNotEmpty)
-                _pill(Icons.check_circle_outline, 'Thu đang nhiều hơn chi',
+                _pill(Icons.check_circle_outline, s.incomeOver,
                     const Color(0xFFB9F6CA), const Color(0x2269F0AE)),
               const SizedBox(height: 14),
               Row(
                 children: [
-                  Expanded(child: _stat(Icons.south_west, 'Tổng thu', income)),
+                  Expanded(child: _stat(Icons.south_west, s.totalIncome, income)),
                   const SizedBox(width: 12),
-                  Expanded(child: _stat(Icons.north_east, 'Tổng chi', expense)),
+                  Expanded(child: _stat(Icons.north_east, s.totalExpense, expense)),
                 ],
               ),
             ],
@@ -106,13 +108,13 @@ class _OverviewScreenState extends State<OverviewScreen> {
         // Hành động nhanh
         Row(
           children: [
-            _action(Icons.north_east, 'Ghi chi', c.expense, const Color(0xFFFFE3E1), const Color(0xFF3A2220),
+            _action(Icons.north_east, s.addExpense, c.expense, const Color(0xFFFFE3E1), const Color(0xFF3A2220),
                 () => openAdd(context, type: TxType.expense)),
-            _action(Icons.south_west, 'Ghi thu', c.income, const Color(0xFFDDF3E8), const Color(0xFF16302A),
+            _action(Icons.south_west, s.addIncome, c.income, const Color(0xFFDDF3E8), const Color(0xFF16302A),
                 () => openAdd(context, type: TxType.income)),
-            _action(Icons.bar_chart_rounded, 'Thống kê', const Color(0xFF3B82F6), const Color(0xFFE0EAFD),
+            _action(Icons.bar_chart_rounded, s.tabStats, const Color(0xFF3B82F6), const Color(0xFFE0EAFD),
                 const Color(0xFF1B2744), () => widget.onGoTab(2)),
-            _action(Icons.schedule, 'Lịch sử', const Color(0xFF8B5CF6), const Color(0xFFEAE3FB),
+            _action(Icons.schedule, s.tabHistory, const Color(0xFF8B5CF6), const Color(0xFFEAE3FB),
                 const Color(0xFF2B2146), () => widget.onGoTab(1)),
           ],
         ),
@@ -125,12 +127,12 @@ class _OverviewScreenState extends State<OverviewScreen> {
             children: [
               Row(
                 children: [
-                  const Expanded(
-                      child: Text('Theo danh mục', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+                  Expanded(
+                      child: Text(s.byCategory, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
                   SizedBox(
-                    width: 150,
+                    width: 170,
                     child: Segmented(
-                      labels: const ['Chi', 'Thu'],
+                      labels: [s.expenseShort, s.incomeShort],
                       index: _type == TxType.expense ? 0 : 1,
                       activeColors: [c.expense, c.income],
                       height: 32,
@@ -142,12 +144,12 @@ class _OverviewScreenState extends State<OverviewScreen> {
               const SizedBox(height: 20),
               DonutChart(
                 slices: [for (final e in entries) MapEntry(Color(e.key.color), e.value)],
-                centerTop: _type == TxType.expense ? 'Tổng chi' : 'Tổng thu',
+                centerTop: _type == TxType.expense ? s.totalExpense : s.totalIncome,
                 centerBottom: compact(totalType),
               ),
               const SizedBox(height: 16),
-              if (entries.isEmpty) const EmptyHint('Chưa có dữ liệu'),
-              for (final e in entries) _catRow(c, e, totalType),
+              if (entries.isEmpty) EmptyHint(s.noData),
+              for (final e in entries) _catRow(c, s, e, totalType),
             ],
           ),
         ),
@@ -160,16 +162,16 @@ class _OverviewScreenState extends State<OverviewScreen> {
             children: [
               Row(
                 children: [
-                  const Expanded(
-                      child: Text('Gần đây', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+                  Expanded(
+                      child: Text(s.recent, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
                   GestureDetector(
                     onTap: () => widget.onGoTab(1),
-                    child: Text('Xem tất cả',
+                    child: Text(s.seeAll,
                         style: TextStyle(color: c.primary, fontWeight: FontWeight.w700)),
                   ),
                 ],
               ),
-              if (recent.isEmpty) const EmptyHint('Chưa có giao dịch. Nhấn + để ghi khoản đầu tiên.'),
+              if (recent.isEmpty) EmptyHint(s.noTxYet),
               if (recent.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(dayLabel(recent.first.date), style: TextStyle(color: c.muted, fontSize: 13)),
@@ -249,9 +251,9 @@ class _OverviewScreenState extends State<OverviewScreen> {
     );
   }
 
-  Widget _catRow(AppColors c, MapEntry<Category, int> e, int total) {
+  Widget _catRow(AppColors c, S s, MapEntry<Category, int> e, int total) {
     final pct = total == 0 ? 0.0 : e.value / total * 100;
-    final pctText = pct < 1 ? '<1% tổng' : '${pct.round()}% tổng';
+    final pctText = s.pctOfTotal(pct < 1 ? 0 : pct.round());
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(
@@ -262,7 +264,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(e.key.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                Text(s.catName(e.key), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                 Text(pctText, style: TextStyle(color: c.muted, fontSize: 12.5)),
               ],
             ),
