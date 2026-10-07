@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../format.dart';
 import '../l10n.dart';
@@ -7,17 +6,7 @@ import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
-
-/// Tự thêm dấu chấm ngăn cách hàng nghìn khi gõ.
-class _MoneyFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue old, TextEditingValue next) {
-    final digits = next.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (digits.isEmpty) return const TextEditingValue();
-    final text = groupDigits(int.parse(digits));
-    return TextEditingValue(text: text, selection: TextSelection.collapsed(offset: text.length));
-  }
-}
+import 'budget.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen(
@@ -180,6 +169,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         recurringId: e.recurringId,
       ));
     }
+    // Cảnh báo ngân sách (SnackBar nằm ở cấp app nên vẫn hiện sau khi đóng màn này).
+    if (_type == TxType.expense) {
+      final warn = budgetWarning(store, catId, _date);
+      if (warn != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(warn.text),
+          backgroundColor: warn.over ? AppColors.of(context).expense : const Color(0xFFB45309),
+        ));
+      }
+    }
     Navigator.of(context).pop();
   }
 
@@ -241,7 +240,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                               child: TextField(
                                 controller: _amountCtl,
                                 keyboardType: TextInputType.number,
-                                inputFormatters: [_MoneyFormatter()],
+                                inputFormatters: [MoneyFormatter()],
                                 onChanged: (_) => setState(() {}),
                                 style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: c.text),
                                 decoration: InputDecoration(

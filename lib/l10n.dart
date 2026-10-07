@@ -96,6 +96,29 @@ class S {
   String get saveExpense => _('Lưu khoản chi', 'Save expense');
   String get saveIncome => _('Lưu khoản thu', 'Save income');
 
+  // ---- Ngân sách ----
+  String get budgetTitle => _('Ngân sách', 'Budgets');
+  String get budgetThisMonth => _('Ngân sách tháng', 'Monthly budget');
+  String get budgetHint => _('Hạn mức chi mỗi tháng, áp dụng cho mọi tháng. Thanh chuyển vàng khi dùng từ 80%, đỏ khi vượt.',
+      'Monthly spending limits, applied to every month. Bars turn amber at 80% and red when over.');
+  String get totalBudget => _('Tổng chi tiêu', 'Total spending');
+  String get noBudgetYet => _('Chưa đặt hạn mức', 'No limit set');
+  String get withBudget => _('ĐÃ ĐẶT HẠN MỨC', 'WITH A LIMIT');
+  String get withoutBudget => _('CHƯA ĐẶT', 'NO LIMIT');
+  String get setBudget => _('Đặt hạn mức', 'Set limit');
+  String budgetFor(String name) => _('Hạn mức tháng · $name', 'Monthly limit · $name');
+  String get removeBudget => _('Bỏ hạn mức', 'Remove limit');
+  String spentOf(String spent, String limit) => _('$spent / $limit', '$spent of $limit');
+  String leftAmount(String v) => _('Còn $v', '$v left');
+  String overAmount(String v) => _('Vượt $v', '$v over');
+  String daysLeft(int n) => _('Còn $n ngày', '$n day${n == 1 ? '' : 's'} left');
+  String get budgetPrompt => _('Đặt hạn mức chi cho từng danh mục để không tiêu quá tay',
+      'Set spending limits per category so you don\'t overspend');
+  String budgetWarn(String name, int pct) =>
+      _('$name đã dùng $pct% ngân sách tháng', '$name has used $pct% of its monthly budget');
+  String budgetOver(String name, String over) =>
+      _('$name đã vượt ngân sách tháng $over', '$name is $over over its monthly budget');
+
   // ---- Giao dịch định kỳ ----
   String get repeat => _('Lặp lại', 'Repeat');
   String freqName(Freq? f) => switch (f) {

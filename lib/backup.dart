@@ -8,6 +8,7 @@ class Backup {
     required this.categories,
     required this.txs,
     this.recurrings = const [],
+    this.budgets = const {},
     required this.exportedAt,
     this.theme,
     this.lang,
@@ -16,11 +17,12 @@ class Backup {
   });
 
   static const format = 'so_thu_chi_backup';
-  static const version = 2; // 2: thêm giao dịch định kỳ
+  static const version = 3; // 2: thêm giao dịch định kỳ, 3: thêm ngân sách
 
   final List<Category> categories;
   final List<Tx> txs;
   final List<Recurring> recurrings;
+  final Map<String, int> budgets;
   final DateTime exportedAt;
   final String? theme; // 'light' | 'dark'
   final String? lang; // 'vi' | 'en'
@@ -40,6 +42,7 @@ class Backup {
         'categories': categories.map((e) => e.toJson()).toList(),
         'txs': txs.map((e) => e.toJson()).toList(),
         'recurrings': recurrings.map((e) => e.toJson()).toList(),
+        'budgets': budgets,
       });
 
   /// Đọc file sao lưu. Ném [FormatException] nếu không phải file của app hoặc bị hỏng.
@@ -59,11 +62,13 @@ class Backup {
       final recs = ((j['recurrings'] as List?) ?? const [])
           .map((e) => Recurring.fromJson(e as Map<String, dynamic>))
           .toList();
+      final budgets = ((j['budgets'] as Map<String, dynamic>?) ?? const {}).map((k, v) => MapEntry(k, v as int));
       final st = (j['settings'] as Map<String, dynamic>?) ?? const {};
       return Backup(
         categories: cats,
         txs: txs,
         recurrings: recs,
+        budgets: budgets,
         exportedAt: DateTime.parse(j['exportedAt'] as String),
         theme: st['theme'] as String?,
         lang: st['lang'] as String?,

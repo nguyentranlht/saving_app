@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../format.dart';
 import '../l10n.dart';
@@ -100,6 +101,17 @@ const List<int> kPalette = [
   0xFF6366F1, 0xFF3B82F6, 0xFF0EA5E9, 0xFF14B8A6, 0xFF16A06A, 0xFF84CC16,
   0xFFB45309, 0xFF9097A8,
 ];
+
+/// Tự thêm dấu chấm ngăn cách hàng nghìn khi gõ.
+class MoneyFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue old, TextEditingValue next) {
+    final digits = next.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return const TextEditingValue();
+    final text = groupDigits(int.parse(digits));
+    return TextEditingValue(text: text, selection: TextSelection.collapsed(offset: text.length));
+  }
+}
 
 class AppCard extends StatelessWidget {
   const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(18), this.radius = 24});

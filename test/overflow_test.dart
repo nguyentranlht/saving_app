@@ -6,6 +6,7 @@ import 'package:so_thu_chi/l10n.dart';
 import 'package:so_thu_chi/main.dart';
 import 'package:so_thu_chi/models.dart';
 import 'package:so_thu_chi/screens/add_transaction.dart';
+import 'package:so_thu_chi/screens/budget.dart';
 import 'package:so_thu_chi/screens/categories.dart';
 import 'package:so_thu_chi/screens/detail.dart';
 import 'package:so_thu_chi/screens/recurring.dart';
@@ -35,6 +36,9 @@ void main() {
 
           store.addRecurring(Recurring(id: 'rec', amount: 15000000, type: TxType.expense, categoryId: 'x',
               note: 'Tiền thuê nhà chung cư hằng tháng', freq: Freq.monthly, anchor: DateTime(now.year, now.month, 1)));
+          store.setBudget(AppStore.totalBudgetKey, 100000000);
+          store.setBudget('work', 100000000); // đã chi 123tr -> vượt
+          store.setBudget('x', 999999999);
           await tester.pumpWidget(SoThuChiApp(store: store));
           await tester.pumpAndSettle();
           final s = S.current;
@@ -50,6 +54,7 @@ void main() {
             const DetailScreen(txId: '1'),
             const CategoriesScreen(),
             const RecurringScreen(),
+            const BudgetScreen(),
             AddTransactionScreen(editingRule: store.recurring('rec')),
           ]) {
             nav.push(MaterialPageRoute(builder: (_) => page));

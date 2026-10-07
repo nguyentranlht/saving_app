@@ -17,6 +17,11 @@ class AppStore extends ChangeNotifier {
   List<Category> categories = [];
   List<Tx> txs = [];
   List<Recurring> recurrings = [];
+
+  /// Hạn mức chi mỗi tháng: id danh mục -> số tiền. Khóa [totalBudgetKey] = hạn mức tổng.
+  Map<String, int> budgets = {};
+  static const totalBudgetKey = '*';
+  static const budgetWarnAt = 0.8; // cảnh báo khi đã dùng từ 80%
   ThemeMode themeMode = ThemeMode.light;
   AppLang lang = AppLang.vi;
   bool reminder = false;
@@ -49,6 +54,8 @@ class AppStore extends ChangeNotifier {
         : (jsonDecode(recs) as List)
             .map((e) => Recurring.fromJson(e as Map<String, dynamic>))
             .toList();
+    final bud = s._prefs.getString('budgets');
+    s.budgets = bud == null ? {} : (jsonDecode(bud) as Map<String, dynamic>).map((k, v) => MapEntry(k, v as int));
     s.themeMode = (s._prefs.getString('theme') == 'dark')
         ? ThemeMode.dark
         : ThemeMode.light;
@@ -84,6 +91,7 @@ class AppStore extends ChangeNotifier {
         'categories', jsonEncode(categories.map((e) => e.toJson()).toList()));
     await _prefs.setString('txs', jsonEncode(txs.map((e) => e.toJson()).toList()));
     await _prefs.setString('recurrings', jsonEncode(recurrings.map((e) => e.toJson()).toList()));
+    await _prefs.setString('budgets', jsonEncode(budgets));
     await _prefs.setString('theme', themeMode == ThemeMode.dark ? 'dark' : 'light');
     await _prefs.setString('lang', lang.name);
     await _prefs.setBool('reminder', reminder);
@@ -219,6 +227,30 @@ class AppStore extends ChangeNotifier {
     _commit();
   }
 
+  // ---- Ngân sách ----
+  /// Đặt hạn mức tháng cho danh mục (hoặc [totalBudgetKey]); null/0 = bỏ hạn mức.
+  void setBudget(String key, int? amount) {
+    if (amount == null || amount <= 0) {
+      budgets.remove(key);
+    } else {
+      budgets[key] = amount;
+    }
+    _commit();
+  }
+
+  /// Đã chi trong tháng chứa [month] cho danh mục [key] (hoặc tổng).
+  int spentIn(String key, DateTime month) {
+    final from = DateTime(month.year, month.month);
+    final to = DateTime(month.year, month.month + 1);
+    return txs
+        .where((t) =>
+            t.type == TxType.expense &&
+            (key == totalBudgetKey || t.categoryId == key) &&
+            !t.date.isBefore(from) &&
+            t.date.isBefore(to))
+        .fold(0, (s, t) => s + t.amount);
+  }
+
   // ---- Danh mục ----
   void upsertCategory(Category c) {
     final i = categories.indexWhere((x) => x.id == c.id);
@@ -232,6 +264,7 @@ class AppStore extends ChangeNotifier {
 
   void deleteCategory(String id) {
     categories.removeWhere((x) => x.id == id);
+    budgets.remove(id);
     _commit();
   }
 
@@ -285,6 +318,7 @@ class AppStore extends ChangeNotifier {
         categories: categories,
         txs: txs,
         recurrings: recurrings,
+        budgets: budgets,
         exportedAt: DateTime.now(),
         theme: themeMode == ThemeMode.dark ? 'dark' : 'light',
         lang: lang.name,
@@ -303,6 +337,7 @@ class AppStore extends ChangeNotifier {
     categories = [...b.categories];
     txs = [...b.txs];
     recurrings = [for (final r in b.recurrings) Recurring.fromJson(r.toJson())];
+    budgets = {...b.budgets};
     if (b.theme != null) themeMode = b.theme == 'dark' ? ThemeMode.dark : ThemeMode.light;
     if (b.lang == 'vi' || b.lang == 'en') {
       lang = AppLang.values.byName(b.lang!);
@@ -320,6 +355,7 @@ class AppStore extends ChangeNotifier {
   Future<void> clearAll() async {
     txs = [];
     recurrings = [];
+    budgets = {};
     categories = defaultCategories();
     reminder = false;
     await Reminder.cancel();

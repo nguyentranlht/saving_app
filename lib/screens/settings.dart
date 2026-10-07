@@ -7,6 +7,7 @@ import '../l10n.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'budget.dart';
 import 'categories.dart';
 import 'recurring.dart';
 
@@ -61,6 +62,14 @@ class SettingsScreen extends StatelessWidget {
                       .push(MaterialPageRoute(builder: (_) => const CategoriesScreen())),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     Text('${store.categories.length}', style: TextStyle(color: c.muted, fontSize: 16)),
+                    const SizedBox(width: 6),
+                    Icon(Icons.chevron_right, color: c.muted),
+                  ])),
+              Divider(height: 1, color: c.divider),
+              _row(c, Icons.savings_outlined, const Color(0xFFF59E0B), s.budgetTitle,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen())),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text('${store.budgets.length}', style: TextStyle(color: c.muted, fontSize: 16)),
                     const SizedBox(width: 6),
                     Icon(Icons.chevron_right, color: c.muted),
                   ])),

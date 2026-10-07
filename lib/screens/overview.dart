@@ -6,6 +6,7 @@ import '../models.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
+import 'budget.dart';
 import 'shell.dart';
 
 class OverviewScreen extends StatefulWidget {
@@ -140,6 +141,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
         ),
         const SizedBox(height: 18),
 
+        // Ngân sách tháng đang chọn
+        _budgetCard(c, s, store),
+        const SizedBox(height: 18),
+
         // Theo danh mục
         AppCard(
           padding: const EdgeInsets.all(18),
@@ -202,6 +207,76 @@ class _OverviewScreenState extends State<OverviewScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _openBudgets() =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen()));
+
+  /// Thẻ ngân sách: hạn mức tổng + 3 danh mục dùng nhiều nhất; chưa đặt thì gợi ý.
+  Widget _budgetCard(AppColors c, S s, AppStore store) {
+    if (store.budgets.isEmpty) {
+      return GestureDetector(
+        onTap: _openBudgets,
+        child: AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).op(c.isDark ? 0.2 : 0.14), borderRadius: BorderRadius.circular(14)),
+                child: const Icon(Icons.savings_outlined, color: Color(0xFFF59E0B)),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(s.budgetTitle, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                    Text(s.budgetPrompt, style: TextStyle(color: c.muted, fontSize: 13)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: c.muted),
+            ],
+          ),
+        ),
+      );
+    }
+    final total = store.budgets[AppStore.totalBudgetKey];
+    final cats = [
+      for (final x in store.catsOf(TxType.expense))
+        if (store.budgets.containsKey(x.id)) x,
+    ]..sort((a, b) => (store.spentIn(b.id, _month) / store.budgets[b.id]!)
+        .compareTo(store.spentIn(a.id, _month) / store.budgets[a.id]!));
+    final shown = cats.take(3).toList();
+    return AppCard(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                  child: Text(s.budgetThisMonth, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+              GestureDetector(
+                onTap: _openBudgets,
+                child: Text(s.seeAll, style: TextStyle(color: c.primary, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+          if (total != null)
+            BudgetBar(
+                category: null,
+                spent: store.spentIn(AppStore.totalBudgetKey, _month),
+                limit: total,
+                onTap: _openBudgets),
+          for (final x in shown) ...[
+            if (total != null || x != shown.first) Divider(height: 1, color: c.divider),
+            BudgetBar(category: x, spent: store.spentIn(x.id, _month), limit: store.budgets[x.id]!, onTap: _openBudgets),
+          ],
+        ],
+      ),
     );
   }
 
