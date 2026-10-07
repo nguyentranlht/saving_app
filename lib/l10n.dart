@@ -98,65 +98,81 @@ class S {
 
   // ---- Tự ghi từ Apple Pay (Phím tắt) ----
   String get applePayTitle => _('Phím tắt & Apple Pay', 'Shortcuts & Apple Pay');
-  String get applePaySub => _('Menu ghi nhanh, tự ghi khi thanh toán', 'Quick menu, auto-log payments');
+  String get applePaySub => _('Ghi nhanh bằng menu, tự ghi khi thanh toán', 'Quick menu, auto-log payments');
   String autoRecorded(int n) =>
       _('Đã ghi $n giao dịch từ Phím tắt', 'Added $n transaction${n == 1 ? '' : 's'} from Shortcuts');
-  String get menuTitle => _('MENU "SỔ THU CHI"', '"SỔ THU CHI" MENU');
+  // Phần 1: menu "Sổ thu chi"
+  String get menuTitle => _('GHI NHANH BẰNG MENU', 'QUICK MENU');
   String get menuIntro => _(
-      'Trong app Phím tắt, mục Saving App có sẵn "Sổ thu chi": chọn 💸 Ghi khoản chi, 💰 Ghi khoản thu '
-          'hoặc 📈 Xem thống kê chi tiêu (mở thẳng tab Thống kê). Ghi chi/thu không cần mở app.',
-      'In the Shortcuts app, under Saving App you\'ll find "Sổ thu chi": pick 💸 log expense, 💰 log income '
-          'or 📈 view stats (opens the Stats tab). Logging doesn\'t open the app.');
-  List<String> get menuWays => en
+      'Ghi chi tiêu chỉ với vài chạm, không cần mở app. Menu "Sổ thu chi" có sẵn trong app Phím tắt, ở mục Saving App.',
+      'Log spending in a few taps without opening the app. The "Sổ thu chi" menu is ready in the Shortcuts app, under Saving App.');
+  List<(String, String, String)> get menuOptions => en
       ? const [
-          'Siri: say "Menu Saving App".',
-          'Home Screen: in Shortcuts, tap and hold "Sổ thu chi" under Saving App → Add to Home Screen.',
-          'Action Button (iPhone 15 Pro and later): Settings → Action Button → Shortcut → "Sổ thu chi".',
-          'Control Center / Lock Screen (iOS 18): add a control → Shortcuts → "Sổ thu chi".',
+          ('💸', 'Ghi khoản chi', 'Enter the amount, then pick a spending category.'),
+          ('💰', 'Ghi khoản thu', 'Enter the amount, then pick an income category.'),
+          ('📈', 'Xem thống kê chi tiêu', 'Opens the app on the Stats tab.'),
         ]
       : const [
-          'Siri: nói "Menu Saving App".',
-          'Màn hình chính: trong app Phím tắt, chạm giữ "Sổ thu chi" ở mục Saving App → Thêm vào Màn hình chính.',
-          'Nút Tác vụ (iPhone 15 Pro trở lên): Cài đặt → Nút Tác vụ → Phím tắt → "Sổ thu chi".',
-          'Trung tâm điều khiển / Màn hình khóa (iOS 18): thêm điều khiển → Phím tắt → "Sổ thu chi".',
+          ('💸', 'Ghi khoản chi', 'Nhập số tiền, rồi chọn mục chi tiêu.'),
+          ('💰', 'Ghi khoản thu', 'Nhập số tiền, rồi chọn mục thu.'),
+          ('📈', 'Xem thống kê chi tiêu', 'Mở app ở tab Thống kê.'),
         ];
+  String get menuSetupTitle => _('Đưa menu ra màn hình chính:', 'Add the menu to your Home Screen:');
+  List<String> get menuSteps => en
+      ? const [
+          'Open the Shortcuts app → Shortcuts tab, scroll down to Saving App.',
+          'Tap and hold "Sổ thu chi" → Add to Home Screen → Add.',
+          'Tap the new icon on your Home Screen whenever you spend.',
+        ]
+      : const [
+          'Mở app Phím tắt → tab Phím tắt, kéo xuống mục Saving App.',
+          'Chạm giữ ô "Sổ thu chi" → Thêm vào Màn hình chính → Thêm.',
+          'Mỗi lần chi tiêu, chạm vào biểu tượng vừa thêm trên màn hình chính.',
+        ];
+  String get menuMore => _(
+      'Có thể gắn thêm vào Nút Tác vụ (Cài đặt → Nút Tác vụ → Phím tắt) hoặc Trung tâm điều khiển (thêm điều khiển → Phím tắt).',
+      'You can also put it on the Action Button (Settings → Action Button → Shortcut) or in Control Center (add a control → Shortcuts).');
+
+  // Phần 2: tự ghi khi thanh toán Apple Pay
   String get autoLogTitle => _('TỰ GHI KHI THANH TOÁN APPLE PAY', 'AUTO-LOG APPLE PAY PAYMENTS');
   String get apIntro => _(
-      'Mỗi lần bạn thanh toán bằng thẻ trong Ví, iPhone tự chạy một phím tắt gửi số tiền và nơi thanh toán sang app. '
-          'Khoản chi được ghi vào sổ khi bạn mở app.',
-      'Each time you pay with a card in Wallet, your iPhone runs a shortcut that sends the amount and merchant to the app. '
-          'The expense is added when you open the app.');
+      'Mỗi lần bạn chạm điện thoại để thanh toán bằng thẻ trong Ví, khoản chi được ghi tự động, kèm tên nơi thanh toán.',
+      'Every time you tap your phone to pay with a card in Wallet, the expense is logged automatically with the merchant name.');
   String get apSetupTitle => _('Cài một lần (iOS 17 trở lên):', 'One-time setup (iOS 17+):');
   List<String> get apSteps => en
       ? const [
           'Open the Shortcuts app → Automation tab → tap +.',
-          'Choose "Transaction", pick the cards to track (or all), choose "Run Immediately", then tap Next.',
-          'Tap "New Blank Automation" / "Add Action", search for "Ghi khoản chi" and pick it.',
-          'Tap "Amount" → choose "Shortcut Input" → "Amount". Do the same for "Merchant" → "Merchant".',
-          'Tap Done. From now on every Apple Pay payment is logged automatically.',
+          'Choose "Transaction". Pick the cards to track (or all), choose "Run Immediately", then tap Next.',
+          'Tap "New Blank Automation", then "Add Action". Search for "Ghi khoản chi" and pick it.',
+          'Tap "Amount" → "Shortcut Input" → "Amount". Then tap "Merchant" → "Shortcut Input" → "Merchant".',
+          'Tap Done. Make a test payment, then open the app: you\'ll see "Added 1 transaction from Shortcuts".',
         ]
       : const [
           'Mở app Phím tắt → tab Tự động hóa → bấm dấu +.',
-          'Chọn "Giao dịch", chọn thẻ muốn theo dõi (hoặc tất cả), chọn "Chạy ngay lập tức" rồi bấm Tiếp.',
-          'Chọn "Tự động hóa trống mới" / "Thêm tác vụ", tìm "Ghi khoản chi" và chọn.',
-          'Chạm ô "Số tiền" → chọn "Đầu vào phím tắt" (Shortcut Input) → "Số tiền" (Amount). '
-              'Làm tương tự với ô "Nơi thanh toán" → "Người bán" (Merchant).',
-          'Bấm Xong. Từ giờ mỗi lần thanh toán Apple Pay sẽ được ghi tự động.',
+          'Chọn "Giao dịch". Chọn thẻ muốn theo dõi (hoặc tất cả), chọn "Chạy ngay lập tức" rồi bấm Tiếp.',
+          'Chọn "Tự động hóa trống mới", rồi "Thêm tác vụ". Tìm "Ghi khoản chi" và chọn.',
+          'Chạm ô "Số tiền" → "Đầu vào phím tắt" → "Số tiền". '
+              'Chạm ô "Nơi thanh toán" → "Đầu vào phím tắt" → "Người bán".',
+          'Bấm Xong. Thanh toán thử một lần rồi mở app: bạn sẽ thấy "Đã ghi 1 giao dịch từ Phím tắt".',
         ];
   String get apCategoryTitle => _('DANH MỤC MẶC ĐỊNH', 'DEFAULT CATEGORY');
   String get apCategoryHint => _(
-      'Dùng khi chi ở nơi mới. Nơi đã từng chi sẽ tự lấy danh mục của lần gần nhất.',
-      'Used for new merchants. Known merchants reuse the category from last time.');
+      'Khoản chi tự ghi từ Apple Pay sẽ vào danh mục của lần gần nhất bạn chi ở cùng nơi đó. '
+          'Nơi mới thì vào danh mục chọn dưới đây.',
+      'Auto-logged payments go to the category you used last time at the same merchant. '
+          'New merchants go to the category below.');
   String get apNotesTitle => _('LƯU Ý', 'GOOD TO KNOW');
   List<String> get apNotes => en
       ? const [
-          'Only payments made with a card in Wallet (tap to pay / Apple Pay) are logged. Bank transfers, physical cards and other e-wallets are not.',
-          'If a payment is refunded or wrong, edit or delete it in History.',
-          'Apple doesn\'t let apps read Wallet transactions directly, so this setup through Shortcuts is required.',
+          'Transactions from Shortcuts appear in the app the next time you open it.',
+          'Only payments with a card in Wallet are auto-logged. Bank transfers, physical cards and other e-wallets are not.',
+          'Refunds aren\'t deducted automatically. Edit or delete the transaction in History.',
+          'Apple doesn\'t let apps read Wallet transactions directly, so the Shortcuts setup above is needed.',
         ]
       : const [
-          'Chỉ ghi được thanh toán bằng thẻ trong Ví (chạm điện thoại / Apple Pay). Chuyển khoản, quẹt thẻ vật lý hay ví điện tử khác không được ghi.',
-          'Nếu khoản thanh toán bị hoàn tiền hoặc sai, bạn sửa hoặc xóa trong Lịch sử.',
+          'Giao dịch ghi qua Phím tắt sẽ hiện trong app ở lần mở app tiếp theo.',
+          'Chỉ tự ghi được thanh toán bằng thẻ trong Ví. Chuyển khoản, quẹt thẻ vật lý hay ví điện tử khác thì không.',
+          'Tiền hoàn lại không được tự trừ. Bạn sửa hoặc xóa giao dịch đó trong Lịch sử.',
           'Apple không cho app đọc trực tiếp giao dịch trong Ví, nên cần cài qua Phím tắt như trên.',
         ];
 

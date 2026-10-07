@@ -40,75 +40,54 @@ class ApplePayScreen extends StatelessWidget {
                 const SizedBox(width: 46),
               ],
             ),
-            // Menu "Sổ thu chi"
+            // 1. Ghi nhanh bằng menu "Sổ thu chi"
             section(s.menuTitle),
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _badge(c, Icons.bolt, c.primary),
-                      const SizedBox(width: 14),
-                      Expanded(child: Text(s.menuIntro, style: const TextStyle(height: 1.45))),
-                    ],
-                  ),
+                  _intro(c, Icons.bolt, c.primary, s.menuIntro),
                   const SizedBox(height: 14),
-                  for (final (i, way) in s.menuWays.indexed) ...[
-                    if (i > 0) const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Icon(const [Icons.mic_none, Icons.apps, Icons.radio_button_checked, Icons.tune][i],
-                              size: 18, color: c.muted),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(way, style: const TextStyle(height: 1.4))),
-                      ],
+                  for (final (emoji, title, desc) in s.menuOptions)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(width: 26, child: Text(emoji, style: const TextStyle(fontSize: 18))),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text.rich(
+                                TextSpan(children: [
+                                  TextSpan(text: '$title\n', style: const TextStyle(fontWeight: FontWeight.w800)),
+                                  TextSpan(text: desc, style: TextStyle(color: c.muted)),
+                                ]),
+                                style: const TextStyle(height: 1.4)),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
+                  const SizedBox(height: 6),
+                  Text(s.menuSetupTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 12),
+                  _steps(c, s.menuSteps),
+                  const SizedBox(height: 14),
+                  _note(c, s.menuMore),
                 ],
               ),
             ),
 
-            // Tự ghi khi thanh toán (tự động hóa "Giao dịch" + hành động "Ghi khoản chi")
+            // 2. Tự ghi khi thanh toán Apple Pay (tự động hóa "Giao dịch" + hành động "Ghi khoản chi")
             section(s.autoLogTitle),
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _badge(c, Icons.contactless_outlined, c.text),
-                      const SizedBox(width: 14),
-                      Expanded(child: Text(s.apIntro, style: const TextStyle(height: 1.45))),
-                    ],
-                  ),
+                  _intro(c, Icons.contactless_outlined, c.text, s.apIntro),
                   const SizedBox(height: 16),
                   Text(s.apSetupTitle, style: const TextStyle(fontWeight: FontWeight.w800)),
                   const SizedBox(height: 12),
-                  for (final (i, step) in s.apSteps.indexed) ...[
-                    if (i > 0) const SizedBox(height: 14),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 26,
-                          height: 26,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(color: c.primary, shape: BoxShape.circle),
-                          child: Text('${i + 1}',
-                              style: TextStyle(color: c.onPrimary, fontWeight: FontWeight.w800, fontSize: 13)),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(child: Text(step, style: const TextStyle(height: 1.45))),
-                      ],
-                    ),
-                  ],
+                  _steps(c, s.apSteps),
                 ],
               ),
             ),
@@ -136,17 +115,7 @@ class ApplePayScreen extends StatelessWidget {
                 children: [
                   for (final (i, note) in s.apNotes.indexed) ...[
                     if (i > 0) const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Icon(Icons.info_outline, size: 18, color: c.muted),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(note, style: TextStyle(color: c.muted, height: 1.4))),
-                      ],
-                    ),
+                    _note(c, note),
                   ],
                 ],
               ),
@@ -157,11 +126,56 @@ class ApplePayScreen extends StatelessWidget {
     );
   }
 
-  Widget _badge(AppColors c, IconData icon, Color bg) => Container(
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
-        child: Icon(icon, color: c.card),
+  /// Biểu tượng + đoạn giới thiệu đầu mỗi phần.
+  Widget _intro(AppColors c, IconData icon, Color bg, String text) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)),
+            child: Icon(icon, color: c.card),
+          ),
+          const SizedBox(width: 14),
+          Expanded(child: Text(text, style: const TextStyle(height: 1.45))),
+        ],
+      );
+
+  /// Các bước đánh số 1, 2, 3…
+  Widget _steps(AppColors c, List<String> steps) => Column(
+        children: [
+          for (final (i, step) in steps.indexed) ...[
+            if (i > 0) const SizedBox(height: 14),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 26,
+                  height: 26,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: c.primary, shape: BoxShape.circle),
+                  child:
+                      Text('${i + 1}', style: TextStyle(color: c.onPrimary, fontWeight: FontWeight.w800, fontSize: 13)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Text(step, style: const TextStyle(height: 1.45))),
+              ],
+            ),
+          ],
+        ],
+      );
+
+  /// Dòng ghi chú có biểu tượng (i).
+  Widget _note(AppColors c, String text) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(Icons.info_outline, size: 18, color: c.muted),
+          ),
+          const SizedBox(width: 10),
+          Expanded(child: Text(text, style: TextStyle(color: c.muted, height: 1.4))),
+        ],
       );
 
   Widget _chip(AppColors c, S s, Category cat, bool sel, VoidCallback onTap) {
