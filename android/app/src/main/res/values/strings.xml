@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="ting_ting_widget_description">Chi tiêu tháng này và số dư</string>
+    <string name="ting_ting_widget_description">Số dư và thu chi tháng này</string>
 </resources>

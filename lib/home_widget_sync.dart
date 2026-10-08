@@ -21,12 +21,18 @@ Map<String, Object> widgetData(AppStore store, [DateTime? now]) {
   final income = store.total(TxType.income, from: from, to: to);
   final balance = store.balance;
   final limit = store.budgets[AppStore.totalBudgetKey];
+  final count = store.txs.where((t) => !t.date.isBefore(from) && t.date.isBefore(to)).length;
+  // Giống nhãn trên thẻ số dư ở Tổng quan: chi > thu thì cảnh báo; có giao dịch và thu ≥ chi thì khen.
+  final trend = spent > income ? 'over' : (count > 0 ? 'ok' : '');
   return {
     'tt_month': s.monthYear(n),
+    'tt_count': s.txCount(count),
+    'tt_trend': trend,
+    'tt_trend_text': trend == 'over' ? s.spendingOver : (trend == 'ok' ? s.incomeOver : ''),
     'tt_spent_label': s.monthExpense,
     'tt_spent': vnd(spent),
     'tt_income_label': s.monthIncome,
-    'tt_income': vnd(income, sign: true),
+    'tt_income': vnd(income),
     'tt_balance_label': s.balance,
     'tt_balance': vnd(balance),
     // Ngân sách tổng: tỉ lệ đã dùng (-1 = chưa đặt) và dòng mô tả.

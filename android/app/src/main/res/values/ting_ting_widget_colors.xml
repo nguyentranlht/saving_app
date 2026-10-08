@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Màu widget: giống thẻ số dư ở Tổng quan (heroStart / heroEnd trong lib/theme.dart) -->
+<resources>
+    <color name="tt_hero_start">#0B5D4B</color>
+    <color name="tt_hero_end">#0F6B55</color>
+    <color name="tt_white_70">#B3FFFFFF</color>
+    <color name="tt_trend_over">#FFD54F</color>
+    <color name="tt_trend_ok">#B9F6CA</color>
+</resources>

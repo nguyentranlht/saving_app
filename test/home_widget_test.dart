@@ -17,8 +17,10 @@ void main() {
     var d = widgetData(store, now);
     expect(d['tt_month'], 'Tháng 10, 2026');
     expect(d['tt_spent'], '3.250.000đ'); // chỉ tháng 10
-    expect(d['tt_income'], '+15.000.000đ');
+    expect(d['tt_income'], '15.000.000đ');
     expect(d['tt_balance'], '10.750.000đ'); // cộng dồn mọi tháng
+    expect(d['tt_count'], '2 giao dịch');
+    expect((d['tt_trend'], d['tt_trend_text']), ('ok', 'Thu đang nhiều hơn chi'));
     expect(d['tt_budget_ratio'], -1.0); // chưa đặt ngân sách tổng
     expect(d['tt_budget'], '');
 
