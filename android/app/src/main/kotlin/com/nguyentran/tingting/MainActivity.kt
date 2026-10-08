@@ -1,4 +1,4 @@
-package com.example.saving_app
+package com.nguyentran.tingting
 
 import io.flutter.embedding.android.FlutterActivity
 

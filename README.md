@@ -13,6 +13,7 @@ App ghi chép thu chi cá nhân, viết bằng Flutter, chạy trên **iOS** và
 - **Danh mục**: 64 biểu tượng, đổi màu, kéo thả để sắp xếp.
 - **Sao lưu / khôi phục** file `.json`, xuất CSV cho Excel.
 - **Nhắc ghi chép** hằng ngày, giao diện Sáng / Tối / Theo hệ thống, tiếng Việt / English.
+- **Widget màn hình chính** (iOS và Android): chi tiêu tháng này, số dư, ngân sách tổng.
 - **Chỉ có trên iPhone**:
   - Menu **"Sổ thu chi"** trong app Phím tắt: ghi chi / thu không cần mở app.
   - **Tự ghi khi thanh toán Apple Pay**, qua tự động hóa "Giao dịch" của Phím tắt.
@@ -111,9 +112,21 @@ lib/
   theme.dart                Màu sắc sáng / tối
   screens/                  Các màn hình
   widgets/                  Thành phần dùng chung (common.dart, calculator.dart)
+  home_widget_sync.dart     Gửi số liệu tháng này sang widget màn hình chính
 ios/Runner/ShortcutIntents.swift   Hành động cho app Phím tắt (menu, Apple Pay)
+ios/TingTingWidget/                Widget iOS (SwiftUI, target TingTingWidget)
+android/app/src/main/kotlin/com/nguyentran/tingting/TingTingWidgetProvider.kt   Widget Android
 test/                       Test
 ```
+
+### Widget màn hình chính
+
+App tính sẵn số liệu, định dạng thành chữ, rồi ghi qua package `home_widget` (xem `lib/home_widget_sync.dart`). Widget chỉ việc hiển thị.
+
+- **iOS** đọc từ App Group `group.com.nguyentran.tingting`. Cả app (`Runner/Runner.entitlements`) và widget (`TingTingWidget/TingTingWidget.entitlements`) phải khai báo cùng group này.
+- **Android** đọc qua `HomeWidgetProvider`. Bố cục ở `res/layout/ting_ting_widget.xml`.
+- Widget **chỉ cập nhật khi app chạy**. Giao dịch ghi qua Phím tắt sẽ hiện trên widget sau khi mở app.
+- Package Kotlin (`com.nguyentran.tingting`) **phải trùng** với `namespace` trong `android/app/build.gradle.kts`. Nếu không, app thoát ngay khi mở.
 
 Dữ liệu lưu trong SharedPreferences dạng JSON. Phím tắt (Swift) và Flutter trao đổi qua cùng kho này:
 

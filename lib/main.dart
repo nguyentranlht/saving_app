@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'home_widget_sync.dart';
 import 'l10n.dart';
 import 'screens/shell.dart';
 import 'store.dart';
@@ -9,6 +10,7 @@ import 'theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final store = await AppStore.load();
+  bindHomeWidget(store); // widget màn hình chính luôn theo số liệu mới nhất
   runApp(SoThuChiApp(store: store));
 }
 
