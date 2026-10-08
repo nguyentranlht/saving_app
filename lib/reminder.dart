@@ -21,18 +21,20 @@ class Reminder {
     if (_ready) return;
     tzdata.initializeTimeZones();
     try {
-      tz.setLocalLocation(tz.getLocation(await FlutterTimezone.getLocalTimezone()));
+      tz.setLocalLocation(tz.getLocation((await FlutterTimezone.getLocalTimezone()).identifier));
     } catch (_) {
       tz.setLocalLocation(tz.getLocation('Asia/Ho_Chi_Minh'));
     }
-    await _plugin.initialize(const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(
-        requestAlertPermission: false,
-        requestBadgePermission: false,
-        requestSoundPermission: false,
+    await _plugin.initialize(
+      settings: const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        ),
       ),
-    ));
+    );
     _ready = true;
   }
 
@@ -54,17 +56,17 @@ class Reminder {
   static Future<void> schedule(int hour, int minute) async {
     if (!supported) return;
     await _init();
-    await _plugin.cancel(_id);
+    await _plugin.cancel(id: _id);
     final now = tz.TZDateTime.now(tz.local);
     var at = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (!at.isAfter(now)) at = at.add(const Duration(days: 1));
     final s = S.current;
     await _plugin.zonedSchedule(
-      _id,
-      s.appName,
-      s.reminderBody,
-      at,
-      NotificationDetails(
+      id: _id,
+      title: s.appName,
+      body: s.reminderBody,
+      scheduledDate: at,
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_reminder',
           s.reminder,
@@ -76,8 +78,6 @@ class Reminder {
       ),
       // Không cần quyền "báo thức chính xác"; có thể lệch vài phút.
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
@@ -85,6 +85,6 @@ class Reminder {
   static Future<void> cancel() async {
     if (!supported) return;
     await _init();
-    await _plugin.cancel(_id);
+    await _plugin.cancel(id: _id);
   }
 }
