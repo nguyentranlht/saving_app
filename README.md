@@ -49,7 +49,27 @@ Có thể dùng `-d ios` hoặc `-d android` thay cho ID nếu chỉ cắm một
 
 - Lần đầu cần chọn Team: mở `ios/Runner.xcworkspace` → target **Runner** → **Signing & Capabilities** → **Team**. Trên iPhone: **Cài đặt → Cài đặt chung → Quản lý VPN & thiết bị → Tin cậy**.
 - Bản **debug** không mở được bằng cách chạm biểu tượng khi không cắm máy tính, và **Phím tắt cũng không chạy được**. Muốn dùng hằng ngày thì cài bản **release**.
-- Tài khoản Apple **miễn phí**: app hết hạn sau **7 ngày**, phải cài lại. Tài khoản trả phí là 1 năm.
+- Tài khoản Apple **miễn phí**: app hết hạn sau **7 ngày**, phải cài lại. Tài khoản trả phí là 1 năm. Xem [Gia hạn mỗi 7 ngày](#gia-hạn-mỗi-7-ngày-tài-khoản-miễn-phí).
+
+#### Gia hạn mỗi 7 ngày (tài khoản miễn phí)
+
+Hết hạn thì app bật ra ngay khi mở; widget và Phím tắt (kể cả tự ghi Apple Pay) cũng ngừng chạy. **Dữ liệu vẫn còn** nếu không xoá app. Để gia hạn, cắm iPhone rồi chạy:
+
+```bash
+rm -f ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*   # xoá profile cũ để xin profile mới
+flutter build ios --release                                          # build và ký lại
+xcrun devicectl device install app --device <ID> build/ios/iphoneos/Runner.app   # cài đè, giữ dữ liệu
+```
+
+`<ID>` lấy bằng `xcrun devicectl list devices` (cột Identifier). Hai dòng cuối có thể thay bằng `flutter run --release` (cũng cài đè, nhưng mở app và giữ terminal cho tới khi bấm `q`).
+
+Kiểm tra ngày hết hạn mới:
+
+```bash
+security cms -D -i build/ios/iphoneos/Runner.app/embedded.mobileprovision | grep -A1 ExpirationDate
+```
+
+Nếu vẫn là ngày cũ: mở `ios/Runner.xcworkspace`, vào **Signing & Capabilities** của cả target **Runner** và **TingTingWidget** để Xcode xin lại profile, rồi chạy lại hai lệnh cuối.
 
 ### Android
 
