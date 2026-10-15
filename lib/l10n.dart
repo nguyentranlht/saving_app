@@ -267,17 +267,18 @@ class S {
   String get month => _('Tháng', 'Month');
   String get year => _('Năm', 'Year');
   String get spent => _('Đã chi', 'Spent');
+  String get earned => _('Đã thu', 'Received');
+  String get topIncome => _('Thu nhiều nhất', 'Top income');
+  String get noIncomeInPeriod => _('Chưa có khoản thu trong giai đoạn này', 'No income in this period');
   String get backToNow => _('Về hiện tại', 'Back to now');
   String weekRange(DateTime from, DateTime toInclusive) => '${dayMonthShort(from)} – ${dayMonthShort(toInclusive)}';
   String monthShort(int m) => en ? _months[m - 1] : 'T$m';
 
-  /// [period]: 0 tuần, 1 tháng, 2 năm. [samePoint]: kỳ hiện tại chưa hết nên so với cùng thời điểm kỳ trước.
-  String delta(int pct, int period, {bool samePoint = false}) {
+  /// "So với cùng kỳ tháng trước". [period]: 0 tuần, 1 tháng, 2 năm.
+  /// [samePoint]: kỳ hiện tại chưa hết nên so với cùng thời điểm của kỳ trước.
+  String comparedTo(int period, {bool samePoint = false}) {
     final p = [_('tuần', 'week'), _('tháng', 'month'), _('năm', 'year')][period];
-    final vs = samePoint ? _('cùng kỳ $p trước', 'same point last $p') : _('$p trước', 'last $p');
-    if (pct == 0) return _('Không đổi so với $vs', 'No change vs $vs');
-    final a = pct.abs();
-    return pct < 0 ? _('Giảm $a% so với $vs', 'Down $a% vs $vs') : _('Tăng $a% so với $vs', 'Up $a% vs $vs');
+    return samePoint ? _('So với cùng kỳ $p trước', 'Vs the same point last $p') : _('So với $p trước', 'Vs last $p');
   }
 
   String get newVsPrev => _('Mới', 'New');

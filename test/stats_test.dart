@@ -47,11 +47,43 @@ void main() {
     expect(find.text('${now.year}'), findsOneWidget);
     if (lastMonth.year == now.year) {
       // Bảng so sánh các tháng: chạm vào tháng trước -> sang chế độ Tháng của tháng đó.
-      await tester.ensureVisible(find.text('−1.234.000đ').last); // .first là dòng Ròng của thẻ tổng
+      // Bảng nằm cuối trang: cuộn xuống cho nó được dựng ra.
+      await tester.drag(find.text('Đã chi'), const Offset(0, -900));
       await tester.pumpAndSettle();
       await tester.tap(find.text('−1.234.000đ').last);
       await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView).last, const Offset(0, 2000)); // cuộn lên đầu trang
+      await tester.pumpAndSettle();
       expect(find.text('Tháng ${lastMonth.month}, ${lastMonth.year}'), findsOneWidget);
     }
+  });
+
+  testWidgets('Thẻ tổng hiện cả thu và chi; danh sách theo danh mục chuyển được Chi / Thu', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({'lang': 'vi'});
+    final store = await AppStore.load();
+    final now = DateTime.now();
+    store.addTx(Tx(id: 'i', amount: 15000000, type: TxType.income, categoryId: 'salary', date: now));
+    store.addTx(Tx(id: 'e', amount: 50000, type: TxType.expense, categoryId: 'food', date: now));
+    await tester.pumpWidget(SoThuChiApp(store: store));
+    await tester.tap(find.text('Thống kê').last);
+    await tester.pumpAndSettle();
+    // Thẻ tổng hiện cả thu và chi cùng lúc, không cần chuyển.
+    expect(find.text('Đã thu'), findsOneWidget);
+    expect(find.text('Đã chi'), findsOneWidget);
+    expect(find.text('15.000.000đ'), findsOneWidget);
+    expect(find.text('50.000đ'), findsOneWidget);
+    expect(find.text('+14.950.000đ'), findsOneWidget); // ròng
+
+    // Danh sách theo danh mục: nút nhỏ Chi | Thu.
+    await tester.drag(find.text('Đã thu'), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('Chi nhiều nhất'), findsOneWidget);
+    await tester.tap(find.text('Thu').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Thu nhiều nhất'), findsOneWidget);
+    expect(find.text('Lương'), findsOneWidget);
   });
 }

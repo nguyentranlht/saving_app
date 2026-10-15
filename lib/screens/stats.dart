@@ -33,6 +33,7 @@ class StatsScreen extends StatefulWidget {
 class _StatsScreenState extends State<StatsScreen> {
   StatsMode _mode = StatsMode.week;
   int _offset = 0;
+  TxType _type = TxType.expense; // danh sách theo danh mục đang xem chi hay thu
 
   void _setMode(StatsMode m) => setState(() {
         _mode = m;
@@ -62,7 +63,10 @@ class _StatsScreenState extends State<StatsScreen> {
 
     final spent = store.total(TxType.expense, from: from, to: to);
     final earned = store.total(TxType.income, from: from, to: to);
-    final prev = store.total(TxType.expense, from: prevFrom, to: prevCut);
+    final prevSpent = store.total(TxType.expense, from: prevFrom, to: prevCut);
+    final prevEarned = store.total(TxType.income, from: prevFrom, to: prevCut);
+    final isExpense = _type == TxType.expense;
+    final main = isExpense ? spent : earned; // tổng của loại đang xem ở danh sách theo danh mục
 
     // Cột biểu đồ
     final labels = <String>[];
@@ -94,20 +98,13 @@ class _StatsScreenState extends State<StatsScreen> {
     // Cột của hôm nay / tháng này được in đậm.
     final current = [for (final (a, b) in buckets) !now.isBefore(a) && now.isBefore(b)];
 
-    final top = store.byCategory(TxType.expense, from: from, to: to).take(5).toList();
+    final top = store.byCategory(_type, from: from, to: to).take(5).toList();
     final prevByCat = {
-      for (final e in store.byCategory(TxType.expense, from: prevFrom, to: prevCut)) e.key.id: e.value,
+      for (final e in store.byCategory(_type, from: prevFrom, to: prevCut)) e.key.id: e.value,
     };
 
-    String? deltaText;
-    var down = true;
-    if (prev > 0) {
-      final pct = ((spent - prev) / prev * 100).round();
-      down = pct <= 0;
-      deltaText = s.delta(pct, _mode.index, samePoint: ongoing);
-    }
     final other = store.cat('other_e');
-    final otherShare = (other != null && spent > 0)
+    final otherShare = (isExpense && other != null && spent > 0)
         ? (top.where((e) => e.key.id == other.id).fold<int>(0, (a, e) => a + e.value) / spent)
         : 0.0;
 
@@ -132,46 +129,41 @@ class _StatsScreenState extends State<StatsScreen> {
         _periodSwitcher(c, s, from, to),
         const SizedBox(height: 12),
 
-        // Tổng kỳ
+        // Tổng kỳ: đã thu | đã chi cạnh nhau, mỗi bên kèm % so với kỳ trước; dưới là ròng.
         AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(s.spent, style: TextStyle(color: c.muted, fontSize: 15)),
-              const SizedBox(height: 6),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(vnd(spent),
-                    style: TextStyle(color: c.expense, fontSize: 36, fontWeight: FontWeight.w800)),
-              ),
-              if (deltaText != null) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: (down ? c.income : c.expense).op(0.15),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(down ? Icons.south_east : Icons.north_east, size: 15, color: down ? c.income : c.expense),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(deltaText,
-                          style: TextStyle(
-                              color: down ? c.income : c.expense, fontWeight: FontWeight.w700, fontSize: 13)),
-                    ),
-                  ]),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: _total(c, s.earned, earned, prevEarned, c.income, upIsGood: true)),
+                    VerticalDivider(width: 24, thickness: 1, color: c.divider),
+                    Expanded(child: _total(c, s.spent, spent, prevSpent, c.expense, upIsGood: false)),
+                  ],
                 ),
+              ),
+              if (prevSpent > 0 || prevEarned > 0) ...[
+                const SizedBox(height: 10),
+                Text(s.comparedTo(_mode.index, samePoint: ongoing),
+                    style: TextStyle(color: c.muted, fontSize: 12.5)),
               ],
               const SizedBox(height: 14),
               Divider(height: 1, color: c.divider),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  _mini(c, s.totalIncome, vnd(earned, sign: true), c.income),
-                  const SizedBox(width: 10),
-                  _mini(c, s.net, vnd(earned - spent, sign: true), c.text),
+                  Text(s.net, style: TextStyle(color: c.muted, fontSize: 15)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(vnd(earned - spent, sign: true),
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -255,14 +247,34 @@ class _StatsScreenState extends State<StatsScreen> {
         ),
         const SizedBox(height: 14),
 
-        // Chi nhiều nhất (kèm so với kỳ trước)
+        // Chi / thu nhiều nhất theo danh mục (kèm so với kỳ trước)
         AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(s.topSpending, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(isExpense ? s.topSpending : s.topIncome,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 150,
+                    child: Segmented(
+                      labels: [s.expenseShort, s.incomeShort],
+                      index: isExpense ? 0 : 1,
+                      activeColors: [c.expense, c.income],
+                      height: 32,
+                      onChanged: (i) => setState(() => _type = i == 0 ? TxType.expense : TxType.income),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
-              if (top.isEmpty) EmptyHint(s.noExpenseInPeriod),
+              if (top.isEmpty) EmptyHint(isExpense ? s.noExpenseInPeriod : s.noIncomeInPeriod),
               for (final e in top) ...[
                 Row(children: [
                   Container(
@@ -276,7 +288,7 @@ class _StatsScreenState extends State<StatsScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16))),
                   const SizedBox(width: 8),
-                  _delta(c, s, e.value, prevByCat[e.key.id]),
+                  _delta(c, s, e.value, prevByCat[e.key.id], upIsGood: !isExpense),
                   const SizedBox(width: 10),
                   Text(compact(e.value), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                 ]),
@@ -284,7 +296,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: LinearProgressIndicator(
-                    value: e.value / spent,
+                    value: e.value / main,
                     minHeight: 10,
                     backgroundColor: c.segment,
                     valueColor: AlwaysStoppedAnimation(Color(e.key.color)),
@@ -377,23 +389,41 @@ class _StatsScreenState extends State<StatsScreen> {
     );
   }
 
-  Widget _mini(AppColors c, String label, String v, Color col) => Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 12.5)),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(v, style: TextStyle(color: col, fontWeight: FontWeight.w800, fontSize: 16)),
-            ),
-          ],
-        ),
+  /// Một cột của thẻ tổng: nhãn, số tiền, % so với kỳ trước.
+  /// [upIsGood]: khoản thu tăng là tốt (xanh); khoản chi tăng là xấu (đỏ).
+  Widget _total(AppColors c, String label, int now, int before, Color color, {required bool upIsGood}) {
+    Widget? pill;
+    if (before > 0) {
+      final pct = ((now - before) / before * 100).round();
+      final up = pct > 0;
+      final col = pct == 0 ? c.muted : (up == upIsGood ? c.income : c.expense);
+      pill = Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(color: col.op(0.14), borderRadius: BorderRadius.circular(14)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          if (pct != 0) Icon(up ? Icons.north_east : Icons.south_east, size: 13, color: col),
+          if (pct != 0) const SizedBox(width: 4),
+          Text('${pct.abs()}%', style: TextStyle(color: col, fontWeight: FontWeight.w800, fontSize: 12.5)),
+        ]),
       );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted, fontSize: 14)),
+        const SizedBox(height: 4),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(vnd(now), style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.w800)),
+        ),
+        if (pill != null) ...[const SizedBox(height: 6), pill],
+      ],
+    );
+  }
 
-  /// "↑ 20%" (đỏ: chi nhiều hơn) / "↓ 15%" (xanh) / "Mới" so với kỳ trước.
-  Widget _delta(AppColors c, S s, int now, int? before) {
+  /// "↑ 20%" / "↓ 15%" / "Mới" so với kỳ trước. Khoản chi: tăng là đỏ; khoản thu ([upIsGood]): tăng là xanh.
+  Widget _delta(AppColors c, S s, int now, int? before, {bool upIsGood = false}) {
     if (before == null || before == 0) {
       return Text(now == 0 ? '' : s.newVsPrev,
           style: TextStyle(color: c.muted, fontSize: 12.5, fontWeight: FontWeight.w700));
@@ -402,7 +432,8 @@ class _StatsScreenState extends State<StatsScreen> {
     if (pct == 0) return Text('0%', style: TextStyle(color: c.muted, fontSize: 12.5));
     final up = pct > 0;
     return Text('${up ? '↑' : '↓'} ${pct.abs()}%',
-        style: TextStyle(color: up ? c.expense : c.income, fontSize: 12.5, fontWeight: FontWeight.w700));
+        style: TextStyle(
+            color: up == upIsGood ? c.income : c.expense, fontSize: 12.5, fontWeight: FontWeight.w700));
   }
 
   /// Bảng các tháng trong năm: chi, thu, ròng và chênh lệch chi so với tháng liền trước.
