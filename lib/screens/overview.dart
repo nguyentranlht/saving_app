@@ -19,6 +19,7 @@ class OverviewScreen extends StatefulWidget {
 
 class _OverviewScreenState extends State<OverviewScreen> {
   TxType _type = TxType.expense;
+  bool _showAllCats = false; // theo danh mục: hiện hết hay chỉ 5 mục đầu
   DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
 
   bool get _isCurrentMonth {
@@ -161,7 +162,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
                       index: _type == TxType.expense ? 0 : 1,
                       activeColors: [c.expense, c.income],
                       height: 32,
-                      onChanged: (i) => setState(() => _type = i == 0 ? TxType.expense : TxType.income),
+                      onChanged: (i) => setState(() {
+                        _type = i == 0 ? TxType.expense : TxType.income;
+                        _showAllCats = false;
+                      }),
                     ),
                   ),
                 ],
@@ -174,7 +178,15 @@ class _OverviewScreenState extends State<OverviewScreen> {
               ),
               const SizedBox(height: 16),
               if (entries.isEmpty) EmptyHint(s.noData),
-              for (final e in entries) _catRow(c, s, e, totalType),
+              for (final e in _showAllCats ? entries : entries.take(5)) _catRow(c, s, e, totalType),
+              if (entries.length > 5)
+                Center(
+                  child: TextButton(
+                    onPressed: () => setState(() => _showAllCats = !_showAllCats),
+                    child: Text(_showAllCats ? s.showLess : s.seeAllCount(entries.length),
+                        style: TextStyle(color: c.primary, fontWeight: FontWeight.w700)),
+                  ),
+                ),
             ],
           ),
         ),
