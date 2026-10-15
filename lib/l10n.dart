@@ -84,6 +84,8 @@ class S {
   String pctOfTotal(int pct) => pct < 1 ? _('<1% tổng', '<1% of total') : _('$pct% tổng', '$pct% of total');
   String get recent => _('Gần đây', 'Recent');
   String get seeAll => _('Xem tất cả', 'See all');
+  String get showLess => _('Thu gọn', 'Show less');
+  String seeAllCount(int n) => _('Xem tất cả ($n)', 'See all ($n)');
   String get noTxYet =>
       _('Chưa có giao dịch. Nhấn + để ghi khoản đầu tiên.', 'No transactions yet. Tap + to add your first one.');
 

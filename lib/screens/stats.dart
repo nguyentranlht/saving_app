@@ -34,6 +34,7 @@ class _StatsScreenState extends State<StatsScreen> {
   StatsMode _mode = StatsMode.week;
   int _offset = 0;
   TxType _type = TxType.expense; // danh sách theo danh mục đang xem chi hay thu
+  bool _showAll = false; // danh sách theo danh mục: hiện hết hay chỉ 5 mục đầu
 
   void _setMode(StatsMode m) => setState(() {
         _mode = m;
@@ -98,14 +99,15 @@ class _StatsScreenState extends State<StatsScreen> {
     // Cột của hôm nay / tháng này được in đậm.
     final current = [for (final (a, b) in buckets) !now.isBefore(a) && now.isBefore(b)];
 
-    final top = store.byCategory(_type, from: from, to: to).take(5).toList();
+    final all = store.byCategory(_type, from: from, to: to);
+    final top = _showAll ? all : all.take(5).toList();
     final prevByCat = {
       for (final e in store.byCategory(_type, from: prevFrom, to: prevCut)) e.key.id: e.value,
     };
 
     final other = store.cat('other_e');
     final otherShare = (isExpense && other != null && spent > 0)
-        ? (top.where((e) => e.key.id == other.id).fold<int>(0, (a, e) => a + e.value) / spent)
+        ? (all.where((e) => e.key.id == other.id).fold<int>(0, (a, e) => a + e.value) / spent)
         : 0.0;
 
     return ListView(
@@ -268,7 +270,10 @@ class _StatsScreenState extends State<StatsScreen> {
                       index: isExpense ? 0 : 1,
                       activeColors: [c.expense, c.income],
                       height: 32,
-                      onChanged: (i) => setState(() => _type = i == 0 ? TxType.expense : TxType.income),
+                      onChanged: (i) => setState(() {
+                        _type = i == 0 ? TxType.expense : TxType.income;
+                        _showAll = false;
+                      }),
                     ),
                   ),
                 ],
@@ -304,6 +309,14 @@ class _StatsScreenState extends State<StatsScreen> {
                 ),
                 const SizedBox(height: 14),
               ],
+              if (all.length > 5)
+                Center(
+                  child: TextButton(
+                    onPressed: () => setState(() => _showAll = !_showAll),
+                    child: Text(_showAll ? s.showLess : s.seeAllCount(all.length),
+                        style: TextStyle(color: c.primary, fontWeight: FontWeight.w700)),
+                  ),
+                ),
             ],
           ),
         ),

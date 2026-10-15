@@ -86,4 +86,30 @@ void main() {
     expect(find.text('Thu nhiều nhất'), findsOneWidget);
     expect(find.text('Lương'), findsOneWidget);
   });
+
+  testWidgets('Danh sách theo danh mục: chạm "Xem tất cả" để hiện hết, "Thu gọn" để về 5 mục', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({'lang': 'vi'});
+    final store = await AppStore.load();
+    final now = DateTime.now();
+    final cats = store.catsOf(TxType.expense).toList(); // 6 danh mục chi mặc định
+    for (var i = 0; i < cats.length; i++) {
+      store.addTx(Tx(id: 'x$i', amount: (i + 1) * 10000, type: TxType.expense, categoryId: cats[i].id, date: now));
+    }
+    await tester.pumpWidget(SoThuChiApp(store: store));
+    await tester.tap(find.text('Thống kê').last);
+    await tester.pumpAndSettle();
+    await tester.drag(find.text('Đã thu'), const Offset(0, -900));
+    await tester.pumpAndSettle();
+    expect(find.text('Xem tất cả (6)'), findsOneWidget);
+    expect(find.text('10.000đ'), findsNothing); // mục nhỏ nhất đang ẩn
+    await tester.tap(find.text('Xem tất cả (6)'));
+    await tester.pumpAndSettle();
+    expect(find.text('Thu gọn'), findsOneWidget);
+    await tester.tap(find.text('Thu gọn'));
+    await tester.pumpAndSettle();
+    expect(find.text('Xem tất cả (6)'), findsOneWidget);
+  });
 }
