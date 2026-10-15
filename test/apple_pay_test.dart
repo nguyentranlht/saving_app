@@ -71,7 +71,21 @@ void main() {
     expect(store.txs.firstWhere((t) => t.amount == 20000).categoryId, 'food');
   });
 
-  test('Hàng chờ hỏng không làm hỏng app', () async {
+  test('Apple Pay + Hỏi danh mục: số tiền từ Ví, danh mục đã chọn, ghi chú là nơi thanh toán', () async {
+    SharedPreferences.setMockInitialValues({
+      'lang': 'vi',
+      'pendingTxs': pending([
+        {'amount': '₫55.700', 'merchant': 'Bách Hóa Xanh', 'card': 'VCB', 'categoryId': 'coffee', 'type': 'expense',
+         'date': '2026-10-15T04:11:23Z'},
+      ]),
+    });
+    final store = await AppStore.load();
+    expect(await store.importPending(), 1);
+    final t = store.txs.single;
+    expect((t.amount, t.categoryId, t.type, t.note), (55700, 'coffee', TxType.expense, 'Bách Hóa Xanh'));
+  });
+
+    test('Hàng chờ hỏng không làm hỏng app', () async {
     SharedPreferences.setMockInitialValues({'lang': 'vi', 'pendingTxs': 'không phải json'});
     final store = await AppStore.load();
     expect(await store.importPending(), 0);

@@ -197,17 +197,42 @@ struct AddExpenseIntent: AppIntent {
   @Parameter(title: "Thẻ")
   var card: String?
 
+  /// Bật: sau khi thanh toán hiện "Chọn mục chi tiêu:" (số tiền vẫn tự lấy từ Ví).
+  /// Tắt: tự đoán danh mục theo nơi thanh toán (AppStore.guessCategory).
+  @Parameter(title: "Hỏi danh mục", default: true)
+  var askCategory: Bool
+
+  /// Luôn ghi vào danh mục này (bỏ qua "Hỏi danh mục").
+  @Parameter(title: "Danh mục")
+  var category: CategoryEntity?
+
   static var parameterSummary: some ParameterSummary {
     Summary("Ghi khoản chi \(\.$amount) tại \(\.$merchant)") {
+      \.$askCategory
+      \.$category
       \.$card
     }
   }
 
-  func perform() async throws -> some IntentResult & ProvidesDialog {
+  /// Ghi xong là kết thúc, không hiện thông báo.
+  func perform() async throws -> some IntentResult {
     let place = merchant ?? ""
-    try AppData.enqueue(["amount": amount, "merchant": place, "card": card ?? ""])
-    let line = "\(AppData.t("Đã ghi", "Logged")) \(amount)\(place.isEmpty ? "" : " · \(place)")"
-    return .result(dialog: IntentDialog(stringLiteral: line))
+    var item = ["amount": amount, "merchant": place, "card": card ?? ""]
+
+    var picked = category.flatMap { $0.isIncome ? nil : $0 }
+    if picked == nil && askCategory {
+      let ask = place.isEmpty
+        ? AppData.t("Chọn mục chi tiêu:", "Choose a spending category:")
+        : AppData.t("\(amount) · \(place)\nChọn mục chi tiêu:", "\(amount) · \(place)\nChoose a spending category:")
+      picked = try await $category.requestDisambiguation(
+        among: CategoryEntity.all().filter { !$0.isIncome }, dialog: IntentDialog(stringLiteral: ask))
+    }
+    if let cat = picked {
+      item["categoryId"] = cat.id
+      item["type"] = "expense"
+    }
+    try AppData.enqueue(item)
+    return .result()
   }
 }
 
