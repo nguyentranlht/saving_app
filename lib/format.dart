@@ -29,11 +29,23 @@ String compact(int n) {
   return '$a';
 }
 
+/// Ký hiệu tiền tệ hay gặp trong số tiền Phím tắt gửi sang.
+const _currency = r'(?:₫|đ|vnđ|vnd|\$|€|£|usd|eur)';
+const _number = r'\d[\d.,]*';
+// Ngày / giờ ("16/10/2026", "12:45") để bỏ đi trước khi tìm số tiền.
+final _dateTime = RegExp(r'\d{1,4}[/:-]\d{1,2}(?:[/:-]\d{1,4})?');
+final _money = RegExp('$_currency\\s*($_number)|($_number)\\s*$_currency', caseSensitive: false);
+
 /// Đọc số tiền do Phím tắt gửi sang: "₫125.000", "125,000 ₫", "125000", "$12.50"...
+/// Cũng đọc được cả đoạn văn bản của giao dịch (khi "Đầu vào phím tắt" chỉ đưa được dạng Văn bản):
+/// bỏ ngày giờ, ưu tiên số đi kèm ký hiệu tiền tệ, không có thì lấy số đầu tiên.
 /// Dấu . và , được coi là ngăn cách hàng nghìn, trừ khi chỉ có 1–2 chữ số phía sau
 /// (phần thập phân, sẽ được làm tròn). Trả về 0 nếu không đọc được.
 int parseAmount(String raw) {
-  final t = raw.replaceAll(RegExp(r'[^0-9.,]'), '');
+  final text = raw.replaceAll(_dateTime, ' ');
+  final m = _money.firstMatch(text);
+  var t = m != null ? (m.group(1) ?? m.group(2))! : (RegExp(_number).firstMatch(text)?.group(0) ?? '');
+  t = t.replaceAll(RegExp(r'[.,]+$'), '');
   final dec = RegExp(r'^(.*)[.,](\d{1,2})$').firstMatch(t);
   if (dec != null) {
     final whole = int.tryParse(dec.group(1)!.replaceAll(RegExp(r'[.,]'), '')) ?? 0;
@@ -41,6 +53,22 @@ int parseAmount(String raw) {
     return whole + (frac >= 50 ? 1 : 0);
   }
   return int.tryParse(t.replaceAll(RegExp(r'[.,]'), '')) ?? 0;
+}
+
+/// Đoán nơi thanh toán từ đoạn văn bản của giao dịch: dòng đầu tiên có chữ,
+/// sau khi bỏ số tiền và ngày giờ. Số tiền gửi riêng (vd. "₫65.000") thì trả về ''.
+String merchantFromText(String raw) {
+  for (final line in raw.split(RegExp(r'[\n\r]+'))) {
+    final rest = line
+        .replaceAll(_money, ' ')
+        .replaceAll(_dateTime, ' ')
+        .replaceAll(RegExp(r'^[\s\-–·•:,]+|[\s\-–·•:,]+$'), '')
+        .trim();
+    if (RegExp(r'[^\d\s.,₫$€£]').hasMatch(rest) && !RegExp('^$_currency\$', caseSensitive: false).hasMatch(rest)) {
+      return rest;
+    }
+  }
+  return '';
 }
 
 String two(int n) => n.toString().padLeft(2, '0');

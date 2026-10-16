@@ -25,6 +25,39 @@ void main() {
     expect(parseAmount('abc'), 0);
   });
 
+  test('Đọc cả đoạn văn bản giao dịch (Đầu vào phím tắt dạng Văn bản)', () {
+    // Bỏ ngày giờ, ưu tiên số đi kèm ký hiệu tiền tệ.
+    expect(parseAmount('Highlands Coffee\n16/10/2026 12:45\n₫45.000'), 45000);
+    expect(parseAmount('CIRCLE K 24/7 - 230.000 ₫ - Visa Credit Everyday'), 230000);
+    expect(parseAmount('Phở 24 thanh toán VND 65,000 lúc 08:30'), 65000);
+    expect(parseAmount('Grab 125.000'), 125000); // không có ký hiệu: lấy số đầu tiên
+    expect(merchantFromText('Highlands Coffee\n16/10/2026 12:45\n₫45.000'), 'Highlands Coffee');
+    expect(merchantFromText('45.000 ₫\nCircle K'), 'Circle K');
+    expect(merchantFromText('₫65.000'), '');
+    expect(merchantFromText('65000'), '');
+  });
+
+  test('Apple Pay gửi cả đoạn văn bản: tự lấy số tiền, nơi thanh toán, và nhớ lần nhận gần nhất', () async {
+    SharedPreferences.setMockInitialValues({'lang': 'vi'});
+    final store = await AppStore.load();
+    expect(store.lastApplePay, isNull);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('pendingTxs', pending([
+      {'amount': 'Highlands Coffee\n₫45.000', 'merchant': '', 'card': '', 'date': '2026-10-07T02:15:00Z'},
+    ]));
+    expect(await store.importPending(), 1);
+    expect(store.txs.first.amount, 45000);
+    expect(store.txs.first.note, 'Highlands Coffee');
+    expect(store.lastApplePay, ('Highlands Coffee\n₫45.000', 45000));
+
+    // Không đọc được số tiền: không ghi, nhưng vẫn nhớ để hiện lên cho người dùng kiểm tra.
+    await prefs.setString('pendingTxs', pending([
+      {'amount': 'Giao dịch', 'merchant': '', 'card': '', 'date': '2026-10-07T03:00:00Z'},
+    ]));
+    expect(await store.importPending(), 0);
+    expect(store.lastApplePay, ('Giao dịch', 0));
+  });
+
   test('Nhập hàng chờ, đoán danh mục theo nơi đã chi', () async {
     SharedPreferences.setMockInitialValues({'lang': 'vi'});
     final store = await AppStore.load();

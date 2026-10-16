@@ -149,18 +149,29 @@ class S {
       ? const [
           'Open the Shortcuts app → Automation tab → tap +.',
           'Choose "Transaction". Pick the cards to track (or all), choose "Run Immediately", then tap Next.',
-          'Tap "New Blank Automation", then "Add Action". Search for "Ghi khoản chi" and pick it.',
-          'Tap "Amount" → "Shortcut Input" → "Amount". Then tap "Merchant" → "Shortcut Input" → "Merchant".',
+          'Tap "Create New Shortcut" (on older iOS: "New Blank Automation"). '
+              'Don\'t pick "Ghi khoản chi" straight from the suggestions: that way the amount isn\'t passed on.',
+          'Search for "Ghi khoản chi" and add it. Tap the "Amount" field, choose "Shortcut Input" above the keyboard, '
+              'tap it, set Type to "Transaction" and pick "Amount". '
+              'Do the same for "Merchant" and pick "Merchant" (it can also stay empty).',
           'Tap Done. Make a test payment, then open the app: you\'ll see "Added 1 transaction from Shortcuts".',
         ]
       : const [
           'Mở app Phím tắt → tab Tự động hóa → bấm dấu +.',
           'Chọn "Giao dịch". Chọn thẻ muốn theo dõi (hoặc tất cả), chọn "Chạy ngay lập tức" rồi bấm Tiếp.',
-          'Chọn "Tự động hóa trống mới", rồi "Thêm tác vụ". Tìm "Ghi khoản chi" và chọn.',
-          'Chạm ô "Số tiền" → "Đầu vào phím tắt" → "Số tiền". '
-              'Chạm ô "Nơi thanh toán" → "Đầu vào phím tắt" → "Người bán".',
+          'Chọn "Tạo phím tắt mới" (iOS cũ: "Tự động hóa trống mới"). '
+              'Đừng chọn thẳng "Ghi khoản chi" trong danh sách gợi ý: cách đó không gửi được số tiền sang.',
+          'Tìm "Ghi khoản chi" và thêm vào. Chạm ô "Số tiền" → chọn "Đầu vào phím tắt" trên bàn phím, '
+              'chạm vào nó, đặt Loại là "Giao dịch" rồi chọn "Số lượng" (là số tiền). '
+              'Ô "Nơi thanh toán" làm tương tự, chọn "Điểm bán hàng" (để trống cũng được).',
           'Bấm Xong. Thanh toán thử một lần rồi mở app: bạn sẽ thấy "Đã ghi 1 giao dịch từ Phím tắt".',
         ];
+  String get apLastTitle => _('LẦN NHẬN GẦN NHẤT', 'LAST RECEIVED');
+  String get apLastHint => _('Dữ liệu Phím tắt gửi sang ở lần thanh toán gần nhất:',
+      'What Shortcuts sent for the latest payment:');
+  String apLastRead(String amount) => _('Đọc được: $amount', 'Read as: $amount');
+  String get apLastFail => _('Không đọc được số tiền. Kiểm tra lại ô "Số tiền" ở bước 4.',
+      'Couldn\'t read the amount. Check the "Amount" field in step 4.');
   String get apCategoryTitle => _('DANH MỤC MẶC ĐỊNH', 'DEFAULT CATEGORY');
   String get apCategoryHint => _(
       'Khoản chi tự ghi từ Apple Pay sẽ vào danh mục của lần gần nhất bạn chi ở cùng nơi đó. '

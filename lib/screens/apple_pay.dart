@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../format.dart';
 import '../l10n.dart';
 import '../models.dart';
 import '../store.dart';
@@ -109,6 +110,29 @@ class ApplePayScreen extends StatelessWidget {
                 ],
               ),
             ),
+            if (store.lastApplePay case (final raw, final amount)) ...[
+              section(s.apLastTitle),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(s.apLastHint, style: TextStyle(color: c.muted, fontSize: 13)),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: c.chip, borderRadius: BorderRadius.circular(12)),
+                      child: SelectableText(raw.isEmpty ? '—' : raw,
+                          maxLines: 8, style: const TextStyle(fontFamily: 'monospace', fontSize: 13)),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(amount > 0 ? s.apLastRead(vnd(amount)) : s.apLastFail,
+                        style: TextStyle(
+                            color: amount > 0 ? c.income : c.expense, fontWeight: FontWeight.w700, fontSize: 14)),
+                  ],
+                ),
+              ),
+            ],
             section(s.apNotesTitle),
             AppCard(
               child: Column(

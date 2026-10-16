@@ -214,6 +214,16 @@ struct AddExpenseIntent: AppIntent {
     }
   }
 
+  /// "Số tiền" có thể là cả đoạn văn bản của giao dịch (khi Đầu vào phím tắt chỉ đưa được dạng Văn bản).
+  /// Lấy riêng phần số tiền ("₫45.000", "45.000 ₫") để hiện trong câu hỏi; việc đọc số do Flutter làm (parseAmount).
+  static func moneyText(_ raw: String) -> String {
+    let pattern = #"(₫|đ|VNĐ|VND|\$|€|£|USD|EUR)\s*\d[\d.,]*|\d[\d.,]*\s*(₫|đ|VNĐ|VND|\$|€|£|USD|EUR)"#
+    if let r = raw.range(of: pattern, options: [.regularExpression, .caseInsensitive]) {
+      return String(raw[r])
+    }
+    return raw.split(whereSeparator: \.isNewline).first.map(String.init) ?? raw
+  }
+
   /// Ghi xong là kết thúc, không hiện thông báo.
   func perform() async throws -> some IntentResult {
     let place = merchant ?? ""
@@ -221,9 +231,11 @@ struct AddExpenseIntent: AppIntent {
 
     var picked = category.flatMap { $0.isIncome ? nil : $0 }
     if picked == nil && askCategory {
-      let ask = place.isEmpty
+      let money = Self.moneyText(amount)
+      let head = place.isEmpty ? money : "\(money) · \(place)"
+      let ask = head.isEmpty
         ? AppData.t("Chọn mục chi tiêu:", "Choose a spending category:")
-        : AppData.t("\(amount) · \(place)\nChọn mục chi tiêu:", "\(amount) · \(place)\nChoose a spending category:")
+        : AppData.t("\(head)\nChọn mục chi tiêu:", "\(head)\nChoose a spending category:")
       picked = try await $category.requestDisambiguation(
         among: CategoryEntity.all().filter { !$0.isIncome }, dialog: IntentDialog(stringLiteral: ask))
     }

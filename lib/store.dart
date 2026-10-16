@@ -231,6 +231,17 @@ class AppStore extends ChangeNotifier {
 
   // ---- Tự ghi từ Phím tắt (Apple Pay) ----
   static const _pendingKey = 'pendingTxs';
+  static const lastApplePayKey = 'lastApplePay';
+
+  /// Dữ liệu Apple Pay nhận được lần gần nhất: (văn bản số tiền gốc, số tiền đọc được; 0 = không đọc được).
+  (String, int)? get lastApplePay {
+    try {
+      final m = jsonDecode(_prefs.getString(lastApplePayKey) ?? '') as Map;
+      return ('${m['raw']}', m['amount'] as int);
+    } catch (_) {
+      return null;
+    }
+  }
 
   void setAutoCategory(String id) {
     autoCategoryId = id;
@@ -278,10 +289,18 @@ class AppStore extends ChangeNotifier {
     final base = DateTime.now().microsecondsSinceEpoch;
     for (final e in list) {
       if (e is! Map) continue;
-      final amount = parseAmount('${e['amount'] ?? ''}');
+      final rawAmount = '${e['amount'] ?? ''}';
+      final amount = parseAmount(rawAmount);
+      // Apple Pay ("Ghi khoản chi" luôn gửi kèm merchant): nhớ lại dữ liệu nhận được lần gần nhất
+      // để màn Phím tắt & Apple Pay hiện ra, dễ kiểm tra khi số tiền đọc sai.
+      if (e.containsKey('merchant')) {
+        await _prefs.setString(lastApplePayKey, jsonEncode({'raw': rawAmount, 'amount': amount}));
+      }
       if (amount <= 0) continue;
       // Menu "Sổ thu chi" gửi sẵn danh mục; "Ghi khoản chi" (Apple Pay) chỉ có nơi thanh toán.
-      final note = '${e['note'] ?? e['merchant'] ?? ''}'.trim();
+      // Nơi thanh toán để trống thì đoán từ đoạn văn bản giao dịch (nếu có).
+      var note = '${e['note'] ?? e['merchant'] ?? ''}'.trim();
+      if (note.isEmpty) note = merchantFromText(rawAmount);
       final chosen = cat('${e['categoryId'] ?? ''}');
       txs.add(Tx(
         id: 'ap${base}_$n',
