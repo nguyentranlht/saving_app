@@ -9,7 +9,8 @@ import 'store.dart';
 /// App Group dùng chung giữa app và widget iOS (Android không cần).
 const kAppGroupId = 'group.com.nguyentran.tingting';
 const _iOSWidget = 'TingTingWidget'; // kind trong ios/TingTingWidget/TingTingWidget.swift
-const _androidWidget = 'TingTingWidgetProvider'; // android/app/src/main/kotlin/.../TingTingWidgetProvider.kt
+// Các cỡ widget Android (4x2, 2x2, 2x1), xem android/app/src/main/kotlin/.../TingTingWidgetProvider.kt
+const _androidWidgets = ['TingTingWidgetProvider', 'TingTingSmallWidgetProvider', 'TingTingMiniWidgetProvider'];
 
 /// Số liệu tháng này cho widget, đã định dạng sẵn để widget chỉ việc hiển thị.
 /// Khóa giữ nguyên tên vì widget iOS / Android đọc đúng các khóa này.
@@ -56,7 +57,13 @@ Future<void> syncHomeWidget(AppStore store) async {
     for (final e in widgetData(store).entries) {
       await HomeWidget.saveWidgetData(e.key, e.value);
     }
-    await HomeWidget.updateWidget(iOSName: _iOSWidget, androidName: _androidWidget);
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      for (final name in _androidWidgets) {
+        await HomeWidget.updateWidget(androidName: name);
+      }
+    } else {
+      await HomeWidget.updateWidget(iOSName: _iOSWidget);
+    }
   } catch (e) {
     debugPrint('Cập nhật widget lỗi: $e');
   }
