@@ -302,6 +302,7 @@ class S {
       'Tap to change name, icon or color. Hold ≡ and drag to reorder.');
   String get addCategory => _('Thêm danh mục mới', 'Add new category');
   String get newCategory => _('Danh mục mới', 'New category');
+  String get addCategoryShort => _('Thêm mới', 'New');
   String get editCategory => _('Sửa danh mục', 'Edit category');
   String get categoryName => _('Tên danh mục', 'Category name');
   String get icon => _('Biểu tượng', 'Icon');

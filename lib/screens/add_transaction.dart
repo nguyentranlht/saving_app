@@ -8,6 +8,7 @@ import '../theme.dart';
 import '../widgets/calculator.dart';
 import '../widgets/common.dart';
 import 'budget.dart';
+import 'categories.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen(
@@ -334,6 +335,37 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                             ),
                           ),
                         ),
+                      // Thêm nhanh danh mục ngay tại đây; lưu xong thì chọn luôn danh mục mới.
+                      GestureDetector(
+                        onTap: () async {
+                          final cat = await showCategoryEditor(context, store, type: _type);
+                          if (cat != null && mounted) setState(() => _catId = cat.id);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(color: c.muted.op(0.4), width: 1.5),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 46,
+                                height: 46,
+                                decoration: BoxDecoration(color: c.primary.op(0.12), shape: BoxShape.circle),
+                                child: Icon(Icons.add, color: c.primary),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(s.addCategoryShort,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: c.primary, fontWeight: FontWeight.w700, fontSize: 13)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 18),

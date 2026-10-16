@@ -144,15 +144,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     );
   }
 
-  /// Bottom sheet thêm / sửa danh mục.
-  void _edit(BuildContext context, AppStore store, Category? existing) {
+  void _edit(BuildContext context, AppStore store, Category? existing) =>
+      showCategoryEditor(context, store, existing: existing, type: _type);
+}
+
+/// Bottom sheet thêm / sửa danh mục. Trả về danh mục vừa lưu (null nếu đóng hoặc xoá).
+/// Dùng ở màn Danh mục và ở màn ghi giao dịch (thêm nhanh).
+Future<Category?> showCategoryEditor(BuildContext context, AppStore store,
+    {Category? existing, required TxType type}) {
     final s = S.current;
     final nameCtl = TextEditingController(text: existing == null ? '' : s.catName(existing));
     var icon = existing?.icon ?? 'shop';
     var color = existing?.color ?? kPalette.first;
-    final type = existing?.type ?? _type;
+    type = existing?.type ?? type;
 
-    showModalBottomSheet<void>(
+    return showModalBottomSheet<Category>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.of(context).card,
@@ -271,14 +277,15 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           onPressed: () {
                             final name = nameCtl.text.trim();
                             if (name.isEmpty) return;
-                            store.upsertCategory(Category(
+                            final saved = Category(
                               id: existing?.id ?? 'c${DateTime.now().microsecondsSinceEpoch}',
                               name: name,
                               icon: icon,
                               color: color,
                               type: type,
-                            ));
-                            Navigator.pop(ctx);
+                            );
+                            store.upsertCategory(saved);
+                            Navigator.pop(ctx, saved);
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: c.primary,
@@ -300,4 +307,3 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       },
     );
   }
-}
