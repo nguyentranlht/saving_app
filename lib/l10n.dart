@@ -193,6 +193,47 @@ class S {
           'Apple không cho app đọc trực tiếp giao dịch trong Ví, nên cần cài qua Phím tắt như trên.',
         ];
 
+  // ---- Mục tiêu tiết kiệm ----
+  String get goalsTitle => _('Mục tiêu tiết kiệm', 'Savings goals');
+  String get goalsSub => _('Tách tiền ra để dành cho từng mục tiêu', 'Set money aside for each goal');
+  String get goalsHint => _(
+      'Tiền nạp vào mục tiêu được tách khỏi số dư khả dụng, không tính là khoản chi. '
+          'Khi dùng tiền, số đã để dành thành một khoản chi.',
+      'Money you put into a goal is set aside from your available balance and isn\'t counted as spending. '
+          'When you use it, the saved amount becomes an expense.');
+  String get availableBalance => _('Số dư khả dụng', 'Available balance');
+  String savingNow(String v) => _('Đang tiết kiệm $v', 'Saving $v');
+  String get newGoal => _('Mục tiêu mới', 'New goal');
+  String get editGoal => _('Sửa mục tiêu', 'Edit goal');
+  String get addGoal => _('Thêm mục tiêu', 'Add goal');
+  String get goalName => _('Tên mục tiêu (vd. Mua laptop)', 'Goal name (e.g. New laptop)');
+  String get goalTarget => _('Số tiền cần', 'Target amount');
+  String get goalDeadline => _('Hạn', 'Deadline');
+  String get noDeadline => _('Không đặt hạn', 'No deadline');
+  String get noGoals => _('Chưa có mục tiêu nào', 'No goals yet');
+  String get goalsActive => _('ĐANG TIẾT KIỆM', 'IN PROGRESS');
+  String get goalsDone => _('ĐÃ HOÀN THÀNH', 'COMPLETED');
+  String savedOf(String saved, String target) => _('$saved / $target', '$saved of $target');
+  String needPerMonth(String v) => _('Cần ~$v/tháng', 'Need ~$v/month');
+  String get goalReached => _('Đã đủ tiền', 'Goal reached');
+  String goalLeft(String v) => _('Còn thiếu $v', '$v to go');
+  String get deposit => _('Nạp tiền', 'Add money');
+  String get withdraw => _('Rút ra', 'Take out');
+  String get useMoney => _('Dùng tiền', 'Use money');
+  String get depositTitle => _('Nạp vào mục tiêu', 'Add to goal');
+  String get withdrawTitle => _('Rút về số dư', 'Back to balance');
+  String availableNow(String v) => _('Số dư khả dụng: $v', 'Available: $v');
+  String savedNow(String v) => _('Đã để dành: $v', 'Saved: $v');
+  String get overAvailable => _('Nhiều hơn số dư khả dụng', 'More than your available balance');
+  String get useMoneyTitle => _('Dùng tiền mục tiêu', 'Use goal money');
+  String useMoneyHint(String v) => _('$v sẽ được ghi thành một khoản chi. Chọn danh mục:',
+      '$v will be logged as an expense. Choose a category:');
+  String get goalHistory => _('LỊCH SỬ', 'HISTORY');
+  String doneOn(String d) => _('Hoàn thành $d', 'Completed $d');
+  String get deleteGoalQ => _('Xóa mục tiêu này?', 'Delete this goal?');
+  String get deleteGoalHint => _('Tiền đang để dành sẽ trả về số dư khả dụng.',
+      'Money saved in it goes back to your available balance.');
+
   // ---- Ngân sách ----
   String get budgetTitle => _('Ngân sách', 'Budgets');
   String get budgetThisMonth => _('Ngân sách tháng', 'Monthly budget');

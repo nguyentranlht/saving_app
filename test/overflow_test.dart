@@ -10,6 +10,7 @@ import 'package:so_thu_chi/screens/apple_pay.dart';
 import 'package:so_thu_chi/screens/budget.dart';
 import 'package:so_thu_chi/screens/categories.dart';
 import 'package:so_thu_chi/screens/detail.dart';
+import 'package:so_thu_chi/screens/goals.dart';
 import 'package:so_thu_chi/screens/recurring.dart';
 import 'package:so_thu_chi/store.dart';
 
@@ -38,6 +39,9 @@ void main() {
           store.addRecurring(Recurring(id: 'rec', amount: 15000000, type: TxType.expense, categoryId: 'x',
               note: 'Tiền thuê nhà chung cư hằng tháng', freq: Freq.monthly, anchor: DateTime(now.year, now.month, 1)));
           store.setBudget(AppStore.totalBudgetKey, 100000000);
+          store.upsertGoal(Goal(id: 'goal', name: 'Mua laptop mới để làm việc và học tập', icon: 'devices',
+              color: 0xFF16A06A, target: 999999999, deadline: DateTime(now.year + 1, now.month)));
+          store.moveToGoal('goal', 123456789);
           store.setBudget('work', 100000000); // đã chi 123tr -> vượt
           store.setBudget('x', 999999999);
           await tester.pumpWidget(SoThuChiApp(store: store));
@@ -64,12 +68,29 @@ void main() {
             const BudgetScreen(),
             const ApplePayScreen(),
             AddTransactionScreen(editingRule: store.recurring('rec')),
+            const GoalsScreen(),
+            const GoalDetailScreen(goalId: 'goal'),
           ]) {
             nav.push(MaterialPageRoute(builder: (_) => page));
             await tester.pumpAndSettle();
             nav.pop();
             await tester.pumpAndSettle();
           }
+          // Các bảng của mục tiêu: sửa, nạp tiền, dùng tiền
+          nav.push(MaterialPageRoute(builder: (_) => const GoalDetailScreen(goalId: 'goal')));
+          await tester.pumpAndSettle();
+          for (final open in [
+            (BuildContext ctx) => showGoalEditor(ctx, existing: store.goal('goal')),
+            (BuildContext ctx) => showGoalMoney(ctx, store.goal('goal')!, deposit: true),
+            (BuildContext ctx) => useGoalMoney(ctx, store.goal('goal')!),
+          ]) {
+            open(tester.element(find.byType(GoalDetailScreen)));
+            await tester.pumpAndSettle();
+            nav.pop();
+            await tester.pumpAndSettle();
+          }
+          nav.pop();
+          await tester.pumpAndSettle();
           // Sheet sửa danh mục
           nav.push(MaterialPageRoute(builder: (_) => const CategoriesScreen()));
           await tester.pumpAndSettle();

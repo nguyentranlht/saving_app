@@ -9,6 +9,7 @@ class Backup {
     required this.txs,
     this.recurrings = const [],
     this.budgets = const {},
+    this.goals = const [],
     required this.exportedAt,
     this.theme,
     this.lang,
@@ -17,12 +18,13 @@ class Backup {
   });
 
   static const format = 'so_thu_chi_backup'; // giữ tên cũ để file sao lưu cũ vẫn khôi phục được
-  static const version = 3; // 2: thêm giao dịch định kỳ, 3: thêm ngân sách
+  static const version = 4; // 2: thêm giao dịch định kỳ, 3: thêm ngân sách, 4: thêm mục tiêu tiết kiệm
 
   final List<Category> categories;
   final List<Tx> txs;
   final List<Recurring> recurrings;
   final Map<String, int> budgets;
+  final List<Goal> goals;
   final DateTime exportedAt;
   final String? theme; // 'system' | 'light' | 'dark'
   final String? lang; // 'vi' | 'en'
@@ -43,6 +45,7 @@ class Backup {
         'txs': txs.map((e) => e.toJson()).toList(),
         'recurrings': recurrings.map((e) => e.toJson()).toList(),
         'budgets': budgets,
+        'goals': goals.map((e) => e.toJson()).toList(),
       });
 
   /// Đọc file sao lưu. Ném [FormatException] nếu không phải file của app hoặc bị hỏng.
@@ -63,12 +66,16 @@ class Backup {
           .map((e) => Recurring.fromJson(e as Map<String, dynamic>))
           .toList();
       final budgets = ((j['budgets'] as Map<String, dynamic>?) ?? const {}).map((k, v) => MapEntry(k, v as int));
+      final goals = ((j['goals'] as List?) ?? const [])
+          .map((e) => Goal.fromJson(e as Map<String, dynamic>))
+          .toList();
       final st = (j['settings'] as Map<String, dynamic>?) ?? const {};
       return Backup(
         categories: cats,
         txs: txs,
         recurrings: recs,
         budgets: budgets,
+        goals: goals,
         exportedAt: DateTime.parse(j['exportedAt'] as String),
         theme: st['theme'] as String?,
         lang: st['lang'] as String?,

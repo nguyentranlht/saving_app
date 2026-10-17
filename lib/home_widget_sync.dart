@@ -34,7 +34,7 @@ Map<String, Object> widgetData(AppStore store, [DateTime? now]) {
     'tt_spent': vnd(spent),
     'tt_income_label': s.monthIncome,
     'tt_income': vnd(income),
-    'tt_balance_label': s.balance,
+    'tt_balance_label': store.savedTotal > 0 ? s.availableBalance : s.balance, // đã trừ tiền mục tiêu
     'tt_balance': vnd(balance),
     // Ngân sách tổng: tỉ lệ đã dùng (-1 = chưa đặt) và dòng mô tả.
     'tt_budget_ratio': limit == null ? -1.0 : spent / limit,

@@ -169,3 +169,82 @@ class Recurring {
         active: (j['active'] as bool?) ?? true,
       );
 }
+
+/// Một lần chuyển tiền vào (+) hoặc rút ra (−) khỏi mục tiêu tiết kiệm.
+class GoalEntry {
+  GoalEntry({required this.amount, required this.date});
+
+  int amount; // dương = nạp vào, âm = rút ra
+  DateTime date;
+
+  Map<String, dynamic> toJson() => {'amount': amount, 'date': date.toIso8601String()};
+
+  factory GoalEntry.fromJson(Map<String, dynamic> j) =>
+      GoalEntry(amount: j['amount'] as int, date: DateTime.parse(j['date'] as String));
+}
+
+/// Mục tiêu tiết kiệm. Tiền nạp vào được tách khỏi số dư khả dụng nhưng không tính là thu / chi;
+/// khi "dùng tiền" thì số đã để dành thành một khoản chi và mục tiêu hoàn thành.
+class Goal {
+  Goal({
+    required this.id,
+    required this.name,
+    required this.icon,
+    required this.color,
+    required this.target,
+    this.deadline,
+    List<GoalEntry>? entries,
+    this.doneAt,
+    this.spentTxId,
+  }) : entries = entries ?? [];
+
+  String id;
+  String name;
+  String icon; // key trong kIcons
+  int color;
+  int target;
+  DateTime? deadline;
+  List<GoalEntry> entries;
+  DateTime? doneAt; // đã dùng tiền / hoàn thành
+  String? spentTxId; // khoản chi tạo ra khi dùng tiền
+
+  bool get done => doneAt != null;
+  int get saved => entries.fold(0, (s, e) => s + e.amount);
+  int get remaining => target > saved ? target - saved : 0;
+  double get progress => target <= 0 ? 0 : (saved / target).clamp(0.0, 1.0);
+  bool get reached => target > 0 && saved >= target;
+
+  /// Cần để dành mỗi tháng để kịp hạn (tính cả tháng hiện tại, không tính tháng của hạn);
+  /// null nếu không đặt hạn hoặc đã đủ.
+  int? perMonth(DateTime now) {
+    if (deadline == null || remaining == 0) return null;
+    final months = (deadline!.year - now.year) * 12 + deadline!.month - now.month;
+    return (remaining / (months < 1 ? 1 : months)).ceil();
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'icon': icon,
+        'color': color,
+        'target': target,
+        if (deadline != null) 'deadline': deadline!.toIso8601String(),
+        'entries': entries.map((e) => e.toJson()).toList(),
+        if (doneAt != null) 'doneAt': doneAt!.toIso8601String(),
+        if (spentTxId != null) 'spentTxId': spentTxId,
+      };
+
+  factory Goal.fromJson(Map<String, dynamic> j) => Goal(
+        id: j['id'] as String,
+        name: j['name'] as String,
+        icon: (j['icon'] as String?) ?? 'savings',
+        color: (j['color'] as int?) ?? 0xFF16A06A,
+        target: j['target'] as int,
+        deadline: j['deadline'] == null ? null : DateTime.parse(j['deadline'] as String),
+        entries: ((j['entries'] as List?) ?? const [])
+            .map((e) => GoalEntry.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        doneAt: j['doneAt'] == null ? null : DateTime.parse(j['doneAt'] as String),
+        spentTxId: j['spentTxId'] as String?,
+      );
+}

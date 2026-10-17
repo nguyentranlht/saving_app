@@ -17,6 +17,7 @@ class AppStore extends ChangeNotifier {
   List<Category> categories = [];
   List<Tx> txs = [];
   List<Recurring> recurrings = [];
+  List<Goal> goals = [];
 
   /// Hạn mức chi mỗi tháng: id danh mục -> số tiền. Khóa [totalBudgetKey] = hạn mức tổng.
   Map<String, int> budgets = {};
@@ -55,6 +56,10 @@ class AppStore extends ChangeNotifier {
         : (jsonDecode(recs) as List)
             .map((e) => Recurring.fromJson(e as Map<String, dynamic>))
             .toList();
+    final gs = s._prefs.getString('goals');
+    s.goals = gs == null
+        ? []
+        : (jsonDecode(gs) as List).map((e) => Goal.fromJson(e as Map<String, dynamic>)).toList();
     final bud = s._prefs.getString('budgets');
     s.budgets = bud == null ? {} : (jsonDecode(bud) as Map<String, dynamic>).map((k, v) => MapEntry(k, v as int));
     // 'system' | 'light' | 'dark' (trùng tên ThemeMode); cài mới thì theo hệ thống.
@@ -92,6 +97,7 @@ class AppStore extends ChangeNotifier {
         'categories', jsonEncode(categories.map((e) => e.toJson()).toList()));
     await _prefs.setString('txs', jsonEncode(txs.map((e) => e.toJson()).toList()));
     await _prefs.setString('recurrings', jsonEncode(recurrings.map((e) => e.toJson()).toList()));
+    await _prefs.setString('goals', jsonEncode(goals.map((e) => e.toJson()).toList()));
     await _prefs.setString('budgets', jsonEncode(budgets));
     await _prefs.setString('theme', themeMode.name);
     await _prefs.setString('lang', lang.name);
@@ -129,7 +135,14 @@ class AppStore extends ChangeNotifier {
       .where((x) => x.type == t && _in(x.date, from, to))
       .fold(0, (s, x) => s + x.amount);
 
-  int get balance => total(TxType.income) - total(TxType.expense);
+  /// Tổng thu − tổng chi từ trước đến nay (gồm cả tiền đang để dành trong mục tiêu).
+  int get totalBalance => total(TxType.income) - total(TxType.expense);
+
+  /// Tiền đang để dành trong các mục tiêu chưa hoàn thành.
+  int get savedTotal => goals.where((g) => !g.done).fold(0, (s, g) => s + g.saved);
+
+  /// Số dư khả dụng: còn tiêu được, đã trừ tiền để dành (hiện ở Tổng quan và widget).
+  int get balance => totalBalance - savedTotal;
 
   /// Tổng theo danh mục, giảm dần.
   List<MapEntry<Category, int>> byCategory(TxType t, {DateTime? from, DateTime? to}) {
@@ -227,6 +240,64 @@ class AppStore extends ChangeNotifier {
   void deleteRecurring(String id) {
     recurrings.removeWhere((x) => x.id == id);
     _commit();
+  }
+
+  // ---- Mục tiêu tiết kiệm ----
+  Goal? goal(String id) {
+    for (final g in goals) {
+      if (g.id == id) return g;
+    }
+    return null;
+  }
+
+  void upsertGoal(Goal g) {
+    final i = goals.indexWhere((x) => x.id == g.id);
+    if (i >= 0) {
+      goals[i] = g;
+    } else {
+      goals.add(g);
+    }
+    _commit();
+  }
+
+  /// Xóa mục tiêu: tiền đang để dành trả về số dư khả dụng. Khoản chi đã tạo (nếu có) vẫn giữ.
+  void deleteGoal(String id) {
+    goals.removeWhere((x) => x.id == id);
+    _commit();
+  }
+
+  /// Nạp ([amount] > 0) hoặc rút ([amount] < 0) tiền của mục tiêu. Rút tối đa bằng số đã để dành.
+  void moveToGoal(String id, int amount, [DateTime? at]) {
+    final g = goal(id);
+    if (g == null || g.done || amount == 0) return;
+    final v = amount < 0 && -amount > g.saved ? -g.saved : amount;
+    if (v == 0) return;
+    g.entries.add(GoalEntry(amount: v, date: at ?? DateTime.now()));
+    _commit();
+  }
+
+  /// Dùng tiền của mục tiêu: số đã để dành thành một khoản chi thuộc [categoryId], mục tiêu hoàn thành.
+  /// Trả về khoản chi vừa tạo (null nếu chưa để dành đồng nào).
+  Tx? spendGoal(String id, String categoryId, [DateTime? at]) {
+    final g = goal(id);
+    if (g == null || g.done) return null;
+    final when = at ?? DateTime.now();
+    Tx? t;
+    if (g.saved > 0) {
+      t = Tx(
+        id: 'g${g.id}_${when.microsecondsSinceEpoch}',
+        amount: g.saved,
+        type: TxType.expense,
+        categoryId: categoryId,
+        note: g.name,
+        date: when,
+      );
+      txs.add(t);
+    }
+    g.doneAt = when;
+    g.spentTxId = t?.id;
+    _commit();
+    return t;
   }
 
   // ---- Tự ghi từ Phím tắt (Apple Pay) ----
@@ -419,6 +490,7 @@ class AppStore extends ChangeNotifier {
         txs: txs,
         recurrings: recurrings,
         budgets: budgets,
+        goals: goals,
         exportedAt: DateTime.now(),
         theme: themeMode.name,
         lang: lang.name,
@@ -438,6 +510,7 @@ class AppStore extends ChangeNotifier {
     txs = [...b.txs];
     recurrings = [for (final r in b.recurrings) Recurring.fromJson(r.toJson())];
     budgets = {...b.budgets};
+    goals = [for (final g in b.goals) Goal.fromJson(g.toJson())];
     themeMode = ThemeMode.values.asNameMap()[b.theme] ?? themeMode;
     if (b.lang == 'vi' || b.lang == 'en') {
       lang = AppLang.values.byName(b.lang!);
@@ -456,6 +529,7 @@ class AppStore extends ChangeNotifier {
     txs = [];
     recurrings = [];
     budgets = {};
+    goals = [];
     categories = defaultCategories();
     reminder = false;
     await Reminder.cancel();

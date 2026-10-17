@@ -7,6 +7,7 @@ import '../store.dart';
 import '../theme.dart';
 import '../widgets/common.dart';
 import 'budget.dart';
+import 'goals.dart';
 import 'shell.dart';
 
 class OverviewScreen extends StatefulWidget {
@@ -93,7 +94,7 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Flexible(
-                    child: Text(s.balance,
+                    child: Text(store.savedTotal > 0 ? s.availableBalance : s.balance,
                         overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 14)),
                   ),
                   const SizedBox(width: 8),
@@ -109,6 +110,24 @@ class _OverviewScreenState extends State<OverviewScreen> {
                 child: Text(vnd(balance),
                     style: const TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.w800)),
               ),
+              // Tiền đang để dành trong mục tiêu (đã trừ khỏi số dư ở trên); chạm để mở Mục tiêu.
+              if (store.savedTotal > 0) ...[
+                const SizedBox(height: 4),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GoalsScreen())),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.savings_outlined, size: 16, color: Colors.white70),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(s.savingNow(vnd(store.savedTotal)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+                    ),
+                    const Icon(Icons.chevron_right, size: 16, color: Colors.white70),
+                  ]),
+                ),
+              ],
               const SizedBox(height: 10),
               if (expense > income)
                 _pill(Icons.warning_amber_rounded, s.spendingOver, const Color(0xFFFFD54F), const Color(0x33FFC107)),
@@ -144,6 +163,10 @@ class _OverviewScreenState extends State<OverviewScreen> {
 
         // Ngân sách tháng đang chọn
         _budgetCard(c, s, store),
+        const SizedBox(height: 18),
+
+        // Mục tiêu tiết kiệm (chưa có thì hiện lời mời tạo, để biết có chức năng này)
+        _goalsCard(c, s, store),
         const SizedBox(height: 18),
 
         // Theo danh mục
@@ -287,6 +310,67 @@ class _OverviewScreenState extends State<OverviewScreen> {
             if (total != null || x != shown.first) Divider(height: 1, color: c.divider),
             BudgetBar(category: x, spent: store.spentIn(x.id, _month), limit: store.budgets[x.id]!, onTap: _openBudgets),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _goalsCard(AppColors c, S s, AppStore store) {
+    final active = store.goals.where((g) => !g.done).toList();
+    void open() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GoalsScreen()));
+    return AppCard(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                  child: Text(s.goalsTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800))),
+              GestureDetector(
+                onTap: open,
+                child: Text(s.seeAll, style: TextStyle(color: c.primary, fontWeight: FontWeight.w700)),
+              ),
+            ],
+          ),
+          for (final (i, g) in active.take(3).indexed) ...[
+            if (i > 0) Divider(height: 1, color: c.divider),
+            GoalBar(goal: g, onTap: () => openGoal(context, g)),
+          ],
+          if (active.isEmpty)
+            InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => showGoalEditor(context),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                          color: c.income.op(c.isDark ? 0.2 : 0.14), borderRadius: BorderRadius.circular(14)),
+                      child: Icon(Icons.savings_outlined, color: c.income),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(s.addGoal,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: c.primary, fontWeight: FontWeight.w800, fontSize: 16)),
+                          Text(s.goalsSub, style: TextStyle(color: c.muted, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.add_circle_outline, color: c.primary),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

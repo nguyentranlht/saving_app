@@ -10,6 +10,7 @@ import '../theme.dart';
 import '../widgets/common.dart';
 import 'apple_pay.dart';
 import 'budget.dart';
+import 'goals.dart';
 import 'categories.dart';
 import 'recurring.dart';
 
@@ -75,6 +76,15 @@ class SettingsScreen extends StatelessWidget {
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BudgetScreen())),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     Text('${store.budgets.length}', style: TextStyle(color: c.muted, fontSize: 16)),
+                    const SizedBox(width: 6),
+                    Icon(Icons.chevron_right, color: c.muted),
+                  ])),
+              Divider(height: 1, color: c.divider),
+              _row(c, Icons.flag_outlined, const Color(0xFF16A06A), s.goalsTitle,
+                  sub: store.savedTotal > 0 ? s.savingNow(compact(store.savedTotal)) : s.goalsSub,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const GoalsScreen())),
+                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text('${store.goals.where((g) => !g.done).length}', style: TextStyle(color: c.muted, fontSize: 16)),
                     const SizedBox(width: 6),
                     Icon(Icons.chevron_right, color: c.muted),
                   ])),
