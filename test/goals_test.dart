@@ -126,7 +126,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), '10000000');
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Nạp tiền'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Nạp 10.000.000đ'));
     await tester.pumpAndSettle();
     expect(store.goals.single.saved, 10000000);
     expect(store.balance, 5000000);
@@ -139,5 +139,31 @@ void main() {
     expect(store.goals.single.done, isTrue);
     expect(store.txs.where((t) => t.type == TxType.expense).single.amount, 10000000);
     expect(store.balance, 5000000);
+  });
+
+  testWidgets('Bỏ tiền nhanh từ Tổng quan: ➕ → chọn mức → Nạp', (tester) async {
+    tester.view.physicalSize = const Size(1170, 2532);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    SharedPreferences.setMockInitialValues({'lang': 'vi'});
+    final store = await AppStore.load();
+    store.addTx(Tx(id: 'luong', amount: 15000000, type: TxType.income, categoryId: 'salary', date: DateTime.now()));
+    store.upsertGoal(laptop());
+    await tester.pumpWidget(SoThuChiApp(store: store));
+    await tester.pumpAndSettle();
+
+    final add = find.descendant(of: find.byType(GoalBar), matching: find.byIcon(Icons.add));
+    await tester.ensureVisible(add);
+    await tester.drag(find.byType(ListView).first, const Offset(0, -300)); // ra khỏi thanh tab dưới
+    await tester.pumpAndSettle();
+    await tester.tap(add);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1tr'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Nạp 1.000.000đ'));
+    await tester.pumpAndSettle();
+    expect(store.goal('g1')!.saved, 1000000);
+    expect(store.balance, 14000000);
+    expect(find.byType(SnackBar), findsNothing); // không hiện thông báo
   });
 }

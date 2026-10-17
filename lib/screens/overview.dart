@@ -147,19 +147,19 @@ class _OverviewScreenState extends State<OverviewScreen> {
         const SizedBox(height: 18),
 
         // Hành động nhanh
-        Row(
-          children: [
-            _action(Icons.north_east, s.addExpense, c.expense, const Color(0xFFFFE3E1), const Color(0xFF3A2220),
-                () => openAdd(context, type: TxType.expense)),
-            _action(Icons.south_west, s.addIncome, c.income, const Color(0xFFDDF3E8), const Color(0xFF16302A),
-                () => openAdd(context, type: TxType.income)),
-            _action(Icons.bar_chart_rounded, s.tabStats, const Color(0xFF3B82F6), const Color(0xFFE0EAFD),
-                const Color(0xFF1B2744), () => widget.onGoTab(2)),
-            _action(Icons.schedule, s.tabHistory, const Color(0xFF8B5CF6), const Color(0xFFEAE3FB),
-                const Color(0xFF2B2146), () => widget.onGoTab(1)),
-          ],
-        ),
-        const SizedBox(height: 18),
+        // Row(
+        //   children: [
+        //     _action(Icons.north_east, s.addExpense, c.expense, const Color(0xFFFFE3E1), const Color(0xFF3A2220),
+        //         () => openAdd(context, type: TxType.expense)),
+        //     _action(Icons.south_west, s.addIncome, c.income, const Color(0xFFDDF3E8), const Color(0xFF16302A),
+        //         () => openAdd(context, type: TxType.income)),
+        //     _action(Icons.bar_chart_rounded, s.tabStats, const Color(0xFF3B82F6), const Color(0xFFE0EAFD),
+        //         const Color(0xFF1B2744), () => widget.onGoTab(2)),
+        //     _action(Icons.schedule, s.tabHistory, const Color(0xFF8B5CF6), const Color(0xFFEAE3FB),
+        //         const Color(0xFF2B2146), () => widget.onGoTab(1)),
+        //   ],
+        // ),
+        // const SizedBox(height: 18),
 
         // Ngân sách tháng đang chọn
         _budgetCard(c, s, store),

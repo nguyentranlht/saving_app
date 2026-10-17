@@ -229,6 +229,8 @@ class S {
   String useMoneyHint(String v) => _('$v sẽ được ghi thành một khoản chi. Chọn danh mục:',
       '$v will be logged as an expense. Choose a category:');
   String get goalHistory => _('LỊCH SỬ', 'HISTORY');
+  String depositAmount(String v) => _('Nạp $v', 'Add $v');
+  String withdrawAmount(String v) => _('Rút $v', 'Take out $v');
   String doneOn(String d) => _('Hoàn thành $d', 'Completed $d');
   String get deleteGoalQ => _('Xóa mục tiêu này?', 'Delete this goal?');
   String get deleteGoalHint => _('Tiền đang để dành sẽ trả về số dư khả dụng.',

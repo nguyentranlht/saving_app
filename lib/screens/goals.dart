@@ -31,11 +31,13 @@ class GoalIcon extends StatelessWidget {
   }
 }
 
-/// Một dòng mục tiêu: icon, tên, %, thanh tiến độ, đã để dành / cần, dòng gợi ý.
+/// Một dòng mục tiêu: icon, tên, %, thanh tiến độ, đã để dành / cần, dòng gợi ý,
+/// và nút ➕ để nạp tiền ngay (mục tiêu chưa hoàn thành).
 class GoalBar extends StatelessWidget {
-  const GoalBar({super.key, required this.goal, this.onTap});
+  const GoalBar({super.key, required this.goal, this.onTap, this.quickAdd = true});
   final Goal goal;
   final VoidCallback? onTap;
+  final bool quickAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +115,18 @@ class GoalBar extends StatelessWidget {
                 ],
               ),
             ),
+            if (quickAdd && !g.done) ...[
+              const SizedBox(width: 10),
+              Material(
+                color: col.op(c.isDark ? 0.22 : 0.14),
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => showGoalMoney(context, g, deposit: true),
+                  child: SizedBox(width: 40, height: 40, child: Icon(Icons.add, color: col)),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -609,11 +623,17 @@ Future<void> showGoalMoney(BuildContext context, Goal g, {required bool deposit}
   final store = StoreScope.read(context);
   final s = S.current;
   final ctl = TextEditingController();
-  // Gợi ý nhanh: số còn thiếu, số cần mỗi tháng (khi nạp); toàn bộ (khi rút).
+  // Chạm một nút là điền số: cần mỗi tháng, vài mức tròn, số còn thiếu (khi nạp); một nửa / toàn bộ (khi rút).
   final per = g.perMonth(DateTime.now());
   final quick = deposit
-      ? <int>{if (per != null && per < g.remaining) per, if (g.remaining > 0) g.remaining}.toList()
-      : <int>[g.saved];
+      ? (<int>{
+          if (per != null && per < g.remaining) per,
+          for (final v in const [500000, 1000000, 2000000, 5000000])
+            if (g.remaining == 0 || v < g.remaining) v,
+          if (g.remaining > 0) g.remaining,
+        }.toList()
+        ..sort())
+      : <int>{if (g.saved >= 2000) g.saved ~/ 2 ~/ 1000 * 1000, g.saved}.toList();
 
   return _sheet<void>(context, (ctx, setS) {
     final c = AppColors.of(ctx);
@@ -658,8 +678,8 @@ Future<void> showGoalMoney(BuildContext context, Goal g, {required bool deposit}
             children: [
               for (final q in quick)
                 ActionChip(
-                  label: Text(vnd(q)),
-                  backgroundColor: c.chip,
+                  label: Text(compact(q), style: const TextStyle(fontWeight: FontWeight.w700)),
+                  backgroundColor: v == q ? Color(g.color).op(0.2) : c.chip,
                   side: BorderSide.none,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   onPressed: () => setS(() => ctl.text = groupDigits(q)),
@@ -671,7 +691,11 @@ Future<void> showGoalMoney(BuildContext context, Goal g, {required bool deposit}
         ElevatedButton(
           onPressed: ok ? save : null,
           style: _primary(c),
-          child: Text(deposit ? s.deposit : s.withdraw, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          child: Text(
+              v > 0 ? (deposit ? s.depositAmount(vnd(v)) : s.withdrawAmount(vnd(v))) : (deposit ? s.deposit : s.withdraw),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
         ),
       ],
     );

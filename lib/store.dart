@@ -267,13 +267,16 @@ class AppStore extends ChangeNotifier {
   }
 
   /// Nạp ([amount] > 0) hoặc rút ([amount] < 0) tiền của mục tiêu. Rút tối đa bằng số đã để dành.
-  void moveToGoal(String id, int amount, [DateTime? at]) {
+  /// Trả về lần nạp / rút vừa thêm (null nếu không đổi gì).
+  GoalEntry? moveToGoal(String id, int amount, [DateTime? at]) {
     final g = goal(id);
-    if (g == null || g.done || amount == 0) return;
+    if (g == null || g.done || amount == 0) return null;
     final v = amount < 0 && -amount > g.saved ? -g.saved : amount;
-    if (v == 0) return;
-    g.entries.add(GoalEntry(amount: v, date: at ?? DateTime.now()));
+    if (v == 0) return null;
+    final e = GoalEntry(amount: v, date: at ?? DateTime.now());
+    g.entries.add(e);
     _commit();
+    return e;
   }
 
   /// Dùng tiền của mục tiêu: số đã để dành thành một khoản chi thuộc [categoryId], mục tiêu hoàn thành.
