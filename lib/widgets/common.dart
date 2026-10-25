@@ -265,7 +265,7 @@ class TxTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                   const SizedBox(height: 2),
-                  Text(tx.note.isEmpty ? sub : '$sub · ${tx.note}',
+                  Text(tx.note.isEmpty ? sub : '${hm(tx.date)} · ${tx.note}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(color: c.muted, fontSize: 12.5)),
