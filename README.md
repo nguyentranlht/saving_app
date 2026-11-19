@@ -51,25 +51,50 @@ Có thể dùng `-d ios` hoặc `-d android` thay cho ID nếu chỉ cắm một
 - Bản **debug** không mở được bằng cách chạm biểu tượng khi không cắm máy tính, và **Phím tắt cũng không chạy được**. Muốn dùng hằng ngày thì cài bản **release**.
 - Tài khoản Apple **miễn phí**: app hết hạn sau **7 ngày**, phải cài lại. Tài khoản trả phí là 1 năm. Xem [Gia hạn mỗi 7 ngày](#gia-hạn-mỗi-7-ngày-tài-khoản-miễn-phí).
 
-#### Gia hạn mỗi 7 ngày (tài khoản miễn phí)
+#### Gia hạn mỗi 7 ngày (tài khoản miễn phí) 19/11/2026
 
-Hết hạn thì app bật ra ngay khi mở; widget và Phím tắt (kể cả tự ghi Apple Pay) cũng ngừng chạy. **Dữ liệu vẫn còn** nếu không xoá app. Để gia hạn, cắm iPhone rồi chạy:
+Hết hạn thì app bật ra ngay khi mở; widget và Phím tắt (kể cả tự ghi Apple Pay) cũng ngừng chạy. **Dữ liệu vẫn còn** nếu không xoá app. Để gia hạn, cắm iPhone, mở khoá màn hình rồi chạy:
 
 ```bash
-rm -f ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*   # xoá profile cũ để xin profile mới
-flutter build ios --release                                          # build và ký lại
-xcrun devicectl device install app --device <ID> build/ios/iphoneos/Runner.app   # cài đè, giữ dữ liệu
+./renew-ios.sh
 ```
 
-`<ID>` lấy bằng `xcrun devicectl list devices` (cột Identifier). Hai dòng cuối có thể thay bằng `flutter run --release` (cũng cài đè, nhưng mở app và giữ terminal cho tới khi bấm `q`).
+Script tự làm: xoá profile cũ → build (lỗi thì thử lại 1 lần) → kiểm tra ngày hết hạn mới của app và widget → **chỉ cài khi mọi bước đều ổn** (cài đè, giữ dữ liệu). Cắm nhiều máy thì chỉ định máy: `./renew-ios.sh <ID>` (lấy ID bằng `xcrun devicectl list devices`).
 
-Kiểm tra ngày hết hạn mới:
+Nếu iPhone báo "Nhà phát triển không được tin cậy": **Cài đặt → Cài đặt chung → Quản lý VPN & thiết bị → Tin cậy**.
+
+<details>
+<summary>Làm tay (khi không dùng script)</summary>
 
 ```bash
+rm -f ~/Library/Developer/Xcode/UserData/Provisioning\ Profiles/*
+flutter build ios --release
 security cms -D -i build/ios/iphoneos/Runner.app/embedded.mobileprovision | grep -A1 ExpirationDate
+xcrun devicectl device install app --device <ID> build/ios/iphoneos/Runner.app
 ```
 
-Nếu vẫn là ngày cũ: mở `ios/Runner.xcworkspace`, vào **Signing & Capabilities** của cả target **Runner** và **TingTingWidget** để Xcode xin lại profile, rồi chạy lại hai lệnh cuối.
+- Lệnh build phải in ra `✓ Built build/ios/iphoneos/Runner.app`. **Build lỗi thì đừng cài**: `build/` vẫn là bản cũ đã hết hạn, cài lên thì app vẫn hết hạn.
+- Ngày hết hạn phải là khoảng 7 ngày sau hôm nay. Vẫn là ngày cũ thì mở `ios/Runner.xcworkspace`, vào **Signing & Capabilities** của **Runner** và **TingTingWidget** để Xcode xin lại profile.
+
+</details>
+
+#### Lỗi "requires minimum platform version 14.0 ... supports 13.0"
+
+Flutter 3.44 gắn cứng iOS **13.0** cho package plugin nó tự sinh (`ios/Flutter/ephemeral/Packages/FlutterGeneratedPluginSwiftPackage`), trong khi `home_widget` và `file_picker` cần **14.0**. Hậu quả: build bằng Xcode luôn lỗi, `flutter build` hay lỗi lần đầu. Project đã đặt iOS 14.0, không cần đổi **Minimum Deployments**.
+
+**Đã sửa trên máy này** bằng 1 dòng trong Flutter: `packages/flutter_tools/lib/src/darwin/darwin.dart`, hàm `supportedPackagePlatform`, iOS dùng `Version(14, 0, null)` (có comment "Ting Ting (local patch)").
+
+⚠️ **Nâng cấp Flutter (`brew upgrade`, `flutter upgrade`) sẽ mất bản sửa.** `./renew-ios.sh` sẽ cảnh báo khi thiếu. Sửa lại:
+
+1. Thử build bằng Xcode trước: Flutter mới có thể đã tự sửa lỗi này.
+2. Nếu vẫn lỗi, mở `/opt/homebrew/share/flutter/packages/flutter_tools/lib/src/darwin/darwin.dart` (thư mục Flutter: `dirname $(dirname $(readlink -f $(which flutter)))`), trong `supportedPackagePlatform` đổi `version: deploymentTarget(),` thành:
+   ```dart
+   // Ting Ting (local patch): home_widget / file_picker need iOS 14.
+   version: this == FlutterDarwinPlatform.ios ? Version(14, 0, null) : deploymentTarget(),
+   ```
+3. Xoá bộ đệm để Flutter build lại công cụ: `rm /opt/homebrew/share/flutter/bin/cache/flutter_tools.{snapshot,stamp}` rồi chạy `flutter --version`.
+
+Gỡ bản sửa: `git -C /opt/homebrew/share/flutter checkout packages/flutter_tools/lib/src/darwin/darwin.dart` rồi xoá bộ đệm như bước 3.
 
 ### Android
 
