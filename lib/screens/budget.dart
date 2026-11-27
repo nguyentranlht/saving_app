@@ -241,6 +241,7 @@ Future<void> editBudget(BuildContext context, Category? cat) async {
   final key = cat?.id ?? AppStore.totalBudgetKey;
   final current = store.budgets[key];
   final ctl = TextEditingController(text: current == null ? '' : groupDigits(current));
+  final focus = FocusNode();
   final now = DateTime.now();
   final lastMonth = store.spentIn(key, DateTime(now.year, now.month - 1));
 
@@ -267,20 +268,26 @@ Future<void> editBudget(BuildContext context, Category? cat) async {
               const SizedBox(height: 6),
               Text('${s.lastMonth}: ${vnd(lastMonth)}', style: TextStyle(color: c.muted)),
               const SizedBox(height: 14),
-              TextField(
+              MoneyKeypadField(
                 controller: ctl,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                inputFormatters: [MoneyFormatter()],
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: c.text),
-                decoration: InputDecoration(
-                  hintText: '0',
-                  suffixText: 'đ',
-                  filled: true,
-                  fillColor: c.chip,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                focusNode: focus,
+                child: TextField(
+                  controller: ctl,
+                  focusNode: focus,
+                  autofocus: true,
+                  keyboardType: TextInputType.none, // dùng bàn phím riêng (MoneyKeypadField)
+                  showCursor: true,
+                  inputFormatters: [MoneyFormatter()],
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: c.text),
+                  decoration: InputDecoration(
+                    hintText: '0',
+                    suffixText: 'đ',
+                    filled: true,
+                    fillColor: c.chip,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  ),
+                  onSubmitted: (v) => save(int.tryParse(v.replaceAll('.', ''))),
                 ),
-                onSubmitted: (v) => save(int.tryParse(v.replaceAll('.', ''))),
               ),
               const SizedBox(height: 18),
               Row(

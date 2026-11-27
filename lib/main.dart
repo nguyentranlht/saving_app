@@ -6,6 +6,7 @@ import 'l10n.dart';
 import 'screens/shell.dart';
 import 'store.dart';
 import 'theme.dart';
+import 'widgets/common.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,7 +40,9 @@ class SoThuChiApp extends StatelessWidget {
             GlobalCupertinoLocalizations.delegate,
           ],
           // Chữ hệ thống quá lớn sẽ phá bố cục; vẫn cho phóng to nhưng giới hạn.
-          builder: (context, child) => MediaQuery.withClampedTextScaling(maxScaleFactor: 1.3, child: child!),
+          // Bàn phím số riêng của app cho các ô nhập tiền nằm ở đáy (MoneyKeypadHost).
+          builder: (context, child) => MediaQuery.withClampedTextScaling(
+              maxScaleFactor: 1.3, child: MoneyKeypadHost(child: child!)),
           home: const Shell(),
         ),
       ),

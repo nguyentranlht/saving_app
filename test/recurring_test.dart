@@ -133,6 +133,9 @@ void main() {
     await tester.tap(find.byIcon(Icons.add).first);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, '5000000');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Xong')); // ẩn bàn phím số của app
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Lặp lại'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Lặp lại'));

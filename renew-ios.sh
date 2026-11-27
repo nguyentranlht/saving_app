@@ -11,7 +11,8 @@ cd "$(dirname "$0")"
 
 APP=build/ios/iphoneos/Runner.app
 PROFILES="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
-LOG="$(mktemp -t renew-ios)"
+LOG_DIR="$(mktemp -d -t renew-ios)"
+LOG="$LOG_DIR/install.log"
 
 fail() { echo "❌ $*" >&2; exit 1; }
 
@@ -42,14 +43,15 @@ rm -f "$PROFILES"/*
 built=0
 for attempt in 1 2; do
   echo "🔨 Build lần $attempt..."
-  if flutter build ios --release >"$LOG" 2>&1 && grep -q "✓ Built" "$LOG"; then
+  BUILD_LOG="$LOG_DIR/build-$attempt.log"
+  if flutter build ios --release >"$BUILD_LOG" 2>&1 && grep -q "✓ Built" "$BUILD_LOG"; then
     built=1
     break
   fi
-  echo "   Build lỗi:"
-  grep -E "error:|Target Integrity|Encountered|No profiles|signing" "$LOG" | head -5 | sed 's/^/   /' || true
+  echo "   Build lỗi (log: $BUILD_LOG):"
+  grep -iE "error|Target Integrity|No profiles|provisioning" "$BUILD_LOG" | grep -v "Automatically signing" | head -6 | sed 's/^/   /' || true
 done
-[ "$built" = 1 ] || fail "Build không thành công, KHÔNG cài. Log đầy đủ: $LOG"
+[ "$built" = 1 ] || fail "Build không thành công, KHÔNG cài. Log: $LOG_DIR"
 
 # 4. Kiểm tra ngày hết hạn của app và widget (phải còn ít nhất 6 ngày)
 for f in "$APP/embedded.mobileprovision" "$APP"/PlugIns/*.appex/embedded.mobileprovision; do

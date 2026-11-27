@@ -30,6 +30,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   late DateTime _date;
   Freq? _freq; // null = không lặp
   final _amountCtl = TextEditingController();
+  final _amountFocus = FocusNode();
   final _noteCtl = TextEditingController();
 
   int get _amount => int.tryParse(_amountCtl.text.replaceAll('.', '')) ?? 0;
@@ -54,6 +55,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   @override
   void dispose() {
     _amountCtl.dispose();
+    _amountFocus.dispose();
     _noteCtl.dispose();
     super.dispose();
   }
@@ -245,16 +247,24 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: TextField(
+                              // Thanh "000" / "Xong" ngay trên bàn phím số.
+                              child: MoneyKeypadField(
                                 controller: _amountCtl,
-                                keyboardType: TextInputType.number,
-                                inputFormatters: [MoneyFormatter()],
+                                focusNode: _amountFocus,
                                 onChanged: (_) => setState(() {}),
-                                style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: c.text),
-                                decoration: InputDecoration(
-                                  hintText: '0',
-                                  hintStyle: TextStyle(color: c.muted.op(0.6)),
-                                  border: InputBorder.none,
+                                child: TextField(
+                                  controller: _amountCtl,
+                                  focusNode: _amountFocus,
+                                  keyboardType: TextInputType.none, // dùng bàn phím riêng (MoneyKeypadField)
+                                  showCursor: true,
+                                  inputFormatters: [MoneyFormatter()],
+                                  onChanged: (_) => setState(() {}),
+                                  style: TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: c.text),
+                                  decoration: InputDecoration(
+                                    hintText: '0',
+                                    hintStyle: TextStyle(color: c.muted.op(0.6)),
+                                    border: InputBorder.none,
+                                  ),
                                 ),
                               ),
                             ),

@@ -113,6 +113,184 @@ class MoneyFormatter extends TextInputFormatter {
   }
 }
 
+/// Ô nhập tiền đang dùng bàn phím riêng của app (null = không ô nào).
+class _KeypadTarget {
+  _KeypadTarget(this.controller, this.focusNode, this.onChanged);
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final ValueChanged<String>? onChanged;
+}
+
+final _activeKeypad = ValueNotifier<_KeypadTarget?>(null);
+
+/// Bọc quanh ô nhập tiền (TextField có `keyboardType: TextInputType.none` để không bật bàn phím
+/// của hệ thống): khi ô được chọn thì hiện bàn phím số riêng của app ([MoneyKeypadHost]).
+class MoneyKeypadField extends StatefulWidget {
+  const MoneyKeypadField(
+      {super.key, required this.controller, required this.focusNode, required this.child, this.onChanged});
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final Widget child;
+
+  /// Gọi sau mỗi lần bấm phím (đổi chữ bằng code thì TextField không tự gọi onChanged).
+  final ValueChanged<String>? onChanged;
+
+  @override
+  State<MoneyKeypadField> createState() => _MoneyKeypadFieldState();
+}
+
+class _MoneyKeypadFieldState extends State<MoneyKeypadField> {
+  late final _target = _KeypadTarget(widget.controller, widget.focusNode, widget.onChanged);
+
+  @override
+  void initState() {
+    super.initState();
+    widget.focusNode.addListener(_sync);
+    if (widget.focusNode.hasFocus) _sync();
+  }
+
+  @override
+  void dispose() {
+    widget.focusNode.removeListener(_sync);
+    _release();
+    super.dispose();
+  }
+
+  void _sync() {
+    if (widget.focusNode.hasFocus) {
+      _activeKeypad.value = _target;
+    } else {
+      _release();
+    }
+  }
+
+  // Đổi sau khung hình hiện tại: có thể đang trong lúc dựng / gỡ cây widget.
+  void _release() => WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_activeKeypad.value == _target) _activeKeypad.value = null;
+      });
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+/// Đặt bàn phím số riêng ở đáy app (trong MaterialApp.builder). Khi bàn phím hiện, phần app phía trên
+/// được thu lại như khi có bàn phím hệ thống, nên ô nhập và các bảng trượt lên không bị che.
+class MoneyKeypadHost extends StatelessWidget {
+  const MoneyKeypadHost({super.key, required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<_KeypadTarget?>(
+      valueListenable: _activeKeypad,
+      child: child,
+      builder: (context, target, child) => Column(
+        children: [
+          Expanded(
+            // Đáy màn hình (thanh home) đã do bàn phím lo.
+            child: target == null ? child! : MediaQuery.removePadding(context: context, removeBottom: true, child: child!),
+          ),
+          if (target != null) _MoneyKeypad(target: target),
+        ],
+      ),
+    );
+  }
+}
+
+class _MoneyKeypad extends StatelessWidget {
+  const _MoneyKeypad({required this.target});
+  final _KeypadTarget target;
+
+  void _set(String digits) {
+    final text = digits.isEmpty ? '' : groupDigits(int.parse(digits));
+    target.controller.value = TextEditingValue(text: text, selection: TextSelection.collapsed(offset: text.length));
+    target.onChanged?.call(text);
+  }
+
+  void _press(String key) {
+    HapticFeedback.selectionClick();
+    var digits = target.controller.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (key == '⌫') {
+      if (digits.isNotEmpty) digits = digits.substring(0, digits.length - 1);
+    } else {
+      if (digits.isEmpty && key.startsWith('0')) return; // không bắt đầu bằng số 0
+      digits += key;
+      if (digits.length > 12) return; // tối đa 999 tỷ
+    }
+    _set(digits);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = AppColors.of(context);
+    Widget key(String label, {bool special = false}) => Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Material(
+              color: special ? c.chip : c.card,
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () => _press(label),
+                onLongPress: label == '⌫' ? () => _set('') : null, // giữ phím xoá: xoá hết
+                child: SizedBox(
+                  height: 52,
+                  child: Center(
+                    child: label == '⌫'
+                        ? Icon(Icons.backspace_outlined, color: c.text, size: 22)
+                        : Text(label, style: TextStyle(color: c.text, fontSize: 24, fontWeight: FontWeight.w700)),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+    return TextFieldTapRegion(
+      child: Material(
+        color: c.bg,
+        child: SafeArea(
+          top: false,
+          child: MediaQuery.withNoTextScaling(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final row in const [
+                    ['1', '2', '3'],
+                    ['4', '5', '6'],
+                    ['7', '8', '9'],
+                  ])
+                    Row(children: [for (final k in row) key(k)]),
+                  Row(children: [key('000', special: true), key('0'), key('⌫', special: true)]),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: target.focusNode.unfocus,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: c.primary,
+                          foregroundColor: c.onPrimary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text(S.current.done, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class AppCard extends StatelessWidget {
   const AppCard({super.key, required this.child, this.padding = const EdgeInsets.all(18), this.radius = 24});
   final Widget child;

@@ -443,6 +443,7 @@ Future<void> showGoalEditor(BuildContext context, {Goal? existing}) {
   final s = S.current;
   final nameCtl = TextEditingController(text: existing?.name ?? '');
   final targetCtl = TextEditingController(text: existing == null ? '' : groupDigits(existing.target));
+  final targetFocus = FocusNode();
   var icon = existing?.icon ?? kGoalIcons.first;
   var color = existing?.color ?? 0xFF16A06A;
   DateTime? deadline = existing?.deadline;
@@ -464,13 +465,20 @@ Future<void> showGoalEditor(BuildContext context, {Goal? existing}) {
           onChanged: (_) => setS(() {}),
         ),
         const SizedBox(height: 12),
-        TextField(
+        MoneyKeypadField(
           controller: targetCtl,
-          keyboardType: TextInputType.number,
-          inputFormatters: [MoneyFormatter()],
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: c.text),
-          decoration: _field(c, s.goalTarget, suffix: 'đ'),
+          focusNode: targetFocus,
           onChanged: (_) => setS(() {}),
+          child: TextField(
+            controller: targetCtl,
+            focusNode: targetFocus,
+            keyboardType: TextInputType.none, // dùng bàn phím riêng (MoneyKeypadField)
+            showCursor: true,
+            inputFormatters: [MoneyFormatter()],
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: c.text),
+            decoration: _field(c, s.goalTarget, suffix: 'đ'),
+            onChanged: (_) => setS(() {}),
+          ),
         ),
         const SizedBox(height: 12),
         // Hạn (không bắt buộc).
@@ -623,6 +631,7 @@ Future<void> showGoalMoney(BuildContext context, Goal g, {required bool deposit}
   final store = StoreScope.read(context);
   final s = S.current;
   final ctl = TextEditingController();
+  final focus = FocusNode();
   // Chạm một nút là điền số: cần mỗi tháng, vài mức tròn, số còn thiếu (khi nạp); một nửa / toàn bộ (khi rút).
   final per = g.perMonth(DateTime.now());
   final quick = deposit
@@ -655,15 +664,22 @@ Future<void> showGoalMoney(BuildContext context, Goal g, {required bool deposit}
         const SizedBox(height: 4),
         Text(g.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: c.muted)),
         const SizedBox(height: 14),
-        TextField(
+        MoneyKeypadField(
           controller: ctl,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          inputFormatters: [MoneyFormatter()],
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: c.text),
-          decoration: _field(c, '0', suffix: 'đ'),
+          focusNode: focus,
           onChanged: (_) => setS(() {}),
-          onSubmitted: (_) => save(),
+          child: TextField(
+            controller: ctl,
+            focusNode: focus,
+            autofocus: true,
+            keyboardType: TextInputType.none, // dùng bàn phím riêng (MoneyKeypadField)
+            showCursor: true,
+            inputFormatters: [MoneyFormatter()],
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: c.text),
+            decoration: _field(c, '0', suffix: 'đ'),
+            onChanged: (_) => setS(() {}),
+            onSubmitted: (_) => save(),
+          ),
         ),
         const SizedBox(height: 8),
         Text(
